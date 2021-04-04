@@ -56,7 +56,11 @@ router.post('/register', (req,res) => {
                     }
                     return res.status(201).json({
                         success: true,
-                        user: user
+                        user: {
+                            email: user.email,
+                            firstName: user.firstName,
+                            lastName: user.lastName
+                        }
                     });
 
                     
@@ -94,7 +98,11 @@ router.post('/login', (req,res) => {
                     res.status(200).json({
                         success: true,
                         token: `Bearer ${token}`,
-                        user: user
+                        user: {
+                            email: user.email,
+                            firstName: user.firstName,
+                            lastName: user.lastName
+                        }
                     });
                 });
             } else{
