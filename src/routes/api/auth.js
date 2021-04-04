@@ -54,7 +54,7 @@ router.post('/register', (req,res) => {
                             error: 'Your request could not be processed. Please try again.'
                         });
                     }
-                    return res.status(200).json({
+                    return res.status(201).json({
                         success: true,
                         user: user
                     });
@@ -98,7 +98,7 @@ router.post('/login', (req,res) => {
                     });
                 });
             } else{
-                res.status(400).json({
+                res.status(401).json({
                     success: false,
                     error: 'Password incorrect'
                 });
