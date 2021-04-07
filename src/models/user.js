@@ -21,13 +21,29 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    gender:{
+        type: String,
+        enum: ['Male', 'Female', 'Other'],
+        require: true
+    },
     avatar: {
         type: String
     },
-    update: Date,
+    friends: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
+    updated: Date,
     created: {
         type: Date,
         default: Date.now
+    },
+    role: {
+        type: String,
+        enum: ['admin', 'user'],
+        default: 'user'
     }
 });
 

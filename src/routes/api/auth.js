@@ -2,14 +2,15 @@ const router = require('express').Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { validateSigninRequest, validateSignupRequest, isRequestValidated } = require('../../validations/auth.js');
 
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
 
 const {secret, tokenLife} = keys.jwt;
 
-router.post('/register', (req,res) => {
-    const {email, firstName, lastName, password} = req.body;
+router.post('/register', validateSignupRequest, isRequestValidated, (req,res) => {
+    const {email, firstName, lastName, password, gender} = req.body;
 
     if(!email) {
         return res.status(400).json({error: 'You must enter an email address.'});
@@ -35,8 +36,10 @@ router.post('/register', (req,res) => {
         const user = new User({
             email,
             password,
+            phoneNumber,
             firstName,
-            lastName
+            lastName, 
+            gender
         });
 
         bcrypt.genSalt(10, (err,salt) => {
@@ -58,8 +61,12 @@ router.post('/register', (req,res) => {
                         success: true,
                         user: {
                             email: user.email,
-                            firstName: user.firstName,
-                            lastName: user.lastName
+                            phoneNumber: user.phoneNumber,
+                            name: {
+                                firstName: user.firstName,
+                                lastName: user.lastName
+                            },
+                            gender: user.gender
                         }
                     });
 
@@ -70,7 +77,7 @@ router.post('/register', (req,res) => {
     });
 });
 
-router.post('/login', (req,res) => {
+router.post('/login', validateSigninRequest, isRequestValidated, (req,res) => {
     const {email, password} = req.body;
 
     if(!email) {
@@ -100,8 +107,10 @@ router.post('/login', (req,res) => {
                         token: `Bearer ${token}`,
                         user: {
                             email: user.email,
-                            firstName: user.firstName,
-                            lastName: user.lastName
+                            name: {
+                                firstName: user.firstName,
+                                lastName: user.lastName
+                            }  
                         }
                     });
                 });
@@ -112,6 +121,11 @@ router.post('/login', (req,res) => {
                 });
             }
         });
+    }).catch( err => {
+        return res.status(400).json({
+            success: false,
+            message: 'Your request could not be processed. Please try again.'
+        })
     });
 });
 
