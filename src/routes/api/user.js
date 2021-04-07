@@ -39,7 +39,7 @@ router.get('/profile', requireSignin, async (req,res) => {
     
 });
 
-router.put('/update/profile', requireSignin, async (req,res) => {
+router.put('/profile', requireSignin, async (req,res) => {
     const user = req.user;
     const update = req.body;
     const query = user.id;
