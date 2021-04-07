@@ -10,7 +10,7 @@ const keys = require('../../config/keys.js');
 const {secret, tokenLife} = keys.jwt;
 
 router.post('/register', validateSignupRequest, isRequestValidated, (req,res) => {
-    const {email, firstName, lastName, password, gender} = req.body;
+    const {email, firstName, lastName, phoneNumber, password, gender} = req.body;
 
     if(!email) {
         return res.status(400).json({error: 'You must enter an email address.'});
