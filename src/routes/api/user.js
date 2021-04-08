@@ -31,7 +31,8 @@ router.get('/profile', requireSignin, async (req,res) => {
                         lastName: _user.lastName
                     },
                     avatar: _user.avatar,
-                    gender: _user.gender
+                    gender: _user.gender,
+                    role: _user.role
                 }
             });
         }
@@ -60,7 +61,8 @@ router.put('/profile', requireSignin, async (req,res) => {
                     lastName: _user.lastName
                 },
                 avatar: _user.avatar,
-                gender: _user.gender
+                gender: _user.gender,
+                role: _user.role
             }
         })
     } catch (error) {

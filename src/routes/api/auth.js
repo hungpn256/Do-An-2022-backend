@@ -66,7 +66,8 @@ router.post('/register', validateSignupRequest, isRequestValidated, (req,res) =>
                                 firstName: user.firstName,
                                 lastName: user.lastName
                             },
-                            gender: user.gender
+                            gender: user.gender,
+                            role: user.role
                         }
                     });
 
@@ -107,10 +108,13 @@ router.post('/login', validateSigninRequest, isRequestValidated, (req,res) => {
                         token: `Bearer ${token}`,
                         user: {
                             email: user.email,
+                            phoneNumber: user.phoneNumber,
                             name: {
                                 firstName: user.firstName,
                                 lastName: user.lastName
-                            }  
+                            },
+                            gender: user.gender,
+                            role: user.role
                         }
                     });
                 });
