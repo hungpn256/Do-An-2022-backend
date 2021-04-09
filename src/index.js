@@ -21,9 +21,10 @@ app.use(passport.initialize());
 // Connect to MongoDB
 mongoose.set('useCreateIndex',true);
 mongoose.connect(database.url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false
+  useCreateIndex: true,
+  useNewUrlParser:true,
+  useUnifiedTopology: true,
+  useFindAndModify: false
 })
 .then(() => console.log(`${chalk.green('✓')} ${chalk.blue('MongoDB Connected!')}`))
 .catch(err => console.log(err));

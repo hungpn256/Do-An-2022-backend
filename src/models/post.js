@@ -11,7 +11,12 @@ const postSchema = new mongoose.Schema({
         }
     ],
     liked: {
-        type: Number
+        type: Number,
+        default: 0
+    },
+    numOfCmt: {
+        type: Number,
+        default: 0
     },
     createBy: {
         type: mongoose.Schema.Types.ObjectId,
