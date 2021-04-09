@@ -30,6 +30,7 @@ mongoose.connect(database.url, {
 .catch(err => console.log(err));
 
 
+app.use('/public', express.static(path.join(__dirname, "uploads")))
 app.get('/', (req,res) => {
     res.send('Hello world!!');
 });

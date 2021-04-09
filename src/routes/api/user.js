@@ -1,9 +1,13 @@
 const router = require('express').Router();
 
 const { requireSignin } = require('../../middleware/index.js');
+const multer = require('multer');
+const { storage } = require('../../helps/upload.js');
 
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
+
+const upload = multer({ storage });
 
 router.get('/profile', requireSignin, async (req,res) => {
     const user = req.user;
@@ -71,6 +75,10 @@ router.put('/profile', requireSignin, async (req,res) => {
             error: 'Your request could not be processed. Please try again.' 
         });
     }
-})
+});
+
+router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) => {
+    res.send('Nani')
+});
 
 module.exports = router;
