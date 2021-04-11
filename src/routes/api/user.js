@@ -81,6 +81,7 @@ router.put('/profile', requireSignin, async (req,res) => {
 router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) => {
     const user = req.user;
     const query = user.id;
+    console.log(req.file);    
     const fileName = req.file.filename;
 
     try {
