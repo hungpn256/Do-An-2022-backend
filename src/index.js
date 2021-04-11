@@ -17,7 +17,7 @@ app.use(express.urlencoded({extended: true }));
 app.use(express.json());
 app.use(cors());
 app.use(passport.initialize());
-
+app.use("/public", express.static(path.join(__dirname, "uploads")));
 // Connect to MongoDB
 mongoose.set('useCreateIndex',true);
 mongoose.connect(database.url, {
@@ -30,7 +30,7 @@ mongoose.connect(database.url, {
 .catch(err => console.log(err));
 
 
-app.use('/public', express.static(path.join(__dirname, "uploads")))
+
 app.get('/', (req,res) => {
     res.send('Hello world!!');
 });

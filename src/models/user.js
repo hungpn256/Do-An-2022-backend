@@ -27,7 +27,9 @@ const userSchema = new mongoose.Schema({
         require: true
     },
     avatar: {
-        type: String
+        id: String,
+        viewUrl: String,
+        downloadUrl: String
     },
     friends: [
         {
