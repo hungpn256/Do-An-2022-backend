@@ -1,14 +1,14 @@
 const router = require('express').Router();
 
 const { requireSignin } = require('../../middleware/index.js');
-const multer = require('multer');
-const { storage } = require('../../helps/upload.js');
+
+const { upload } = require('../../helps/upload.js');
 
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
 const { uploadFile, generatePublicUrl, deleteFile } = require('../../helps/google_drive_api.js')
 
-const upload = multer({ storage });
+
 
 router.get('/profile', requireSignin, async (req,res) => {
     const user = req.user;
@@ -104,7 +104,7 @@ router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) =>
         const update = {
             avatar: {
                 id: resultUploadFile.data.id,
-                viewUrl: resultUrlFile.data.webViewLink,
+                viewUrl: resultUrlFile.data.thumbnailLink,
                 downloadUrl: resultUrlFile.data.webContentLink
             }
         }
