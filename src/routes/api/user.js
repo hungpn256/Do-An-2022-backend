@@ -8,6 +8,43 @@ const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
 const { uploadFile, generatePublicUrl, deleteFile } = require('../../helps/google_drive_api.js')
 
+router.get('/profile', requireSignin, async (req,res) => {
+    const user = req.user;
+    User.findById(user.id)
+    .exec((err, _user) => {
+        if(err) 
+            return res.status(500).json({ 
+                success: false,
+                error: 'Your request could not be processed. Please try again.' 
+            });
+        if(!_user) 
+            return res.status(401).json({ 
+                success: false,
+                message: "User doesn't exist."
+            });
+        else{
+            return res.status(200).json({
+                success: true,
+                user: {
+                    _id: _user._id,
+                    email: _user.email,
+                    phoneNumber: _user.phoneNumber,
+                    name: {
+                        firstName: _user.firstName,
+                        lastName: _user.lastName
+                    },
+                    location: _user.location,
+                    relation: _user.relation,
+                    avatar: _user.avatar,
+                    gender: _user.gender,
+                    role: _user.role
+                }
+            });
+        }
+    });
+    
+});
+
 router.get('/:id', async (req,res) => {
     const id = req.params.id;
     
@@ -34,6 +71,8 @@ router.get('/:id', async (req,res) => {
                         firstName: _user.firstName,
                         lastName: _user.lastName
                     },
+                    location: _user.location,
+                    relation: _user.relation,
                     avatar: _user.avatar,
                     gender: _user.gender,
                     role: _user.role
@@ -43,41 +82,6 @@ router.get('/:id', async (req,res) => {
     });
     
 
-});
-
-router.get('/profile', requireSignin, async (req,res) => {
-    const user = req.user;
-    User.findById(user.id)
-    .exec((err, _user) => {
-        if(err) 
-            return res.status(500).json({ 
-                success: false,
-                error: 'Your request could not be processed. Please try again.' 
-            });
-        if(!_user) 
-            return res.status(401).json({ 
-                success: false,
-                message: "User doesn't exist."
-            });
-        else{
-            return res.status(200).json({
-                success: true,
-                user: {
-                    _id: _user._id,
-                    email: _user.email,
-                    phoneNumber: _user.phoneNumber,
-                    name: {
-                        firstName: _user.firstName,
-                        lastName: _user.lastName
-                    },
-                    avatar: _user.avatar,
-                    gender: _user.gender,
-                    role: _user.role
-                }
-            });
-        }
-    });
-    
 });
 
 router.put('/profile', requireSignin, async (req,res) => {
@@ -100,6 +104,8 @@ router.put('/profile', requireSignin, async (req,res) => {
                     firstName: _user.firstName,
                     lastName: _user.lastName
                 },
+                location: _user.location,
+                relation: _user.relation,
                 avatar: _user.avatar,
                 gender: _user.gender,
                 role: _user.role

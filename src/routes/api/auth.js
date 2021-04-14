@@ -60,6 +60,7 @@ router.post('/register', validateSignupRequest, isRequestValidated, (req,res) =>
                     return res.status(201).json({
                         success: true,
                         user: {
+                            id: user._id,
                             email: user.email,
                             phoneNumber: user.phoneNumber,
                             name: {
@@ -107,6 +108,7 @@ router.post('/login', validateSigninRequest, isRequestValidated, (req,res) => {
                         success: true,
                         token: `Bearer ${token}`,
                         user: {
+                            id: user._id,
                             email: user.email,
                             phoneNumber: user.phoneNumber,
                             name: {

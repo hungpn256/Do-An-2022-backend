@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema({
         viewUrl: String,
         downloadUrl: String
     },
+    location: String,
+    relation: String,
     friends: [
         {
             type: mongoose.Schema.Types.ObjectId,
