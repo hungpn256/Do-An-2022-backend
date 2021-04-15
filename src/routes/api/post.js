@@ -185,7 +185,7 @@ router.get('/:userId?', async (req,res) => {
     if(posts.length === 0) {
       return res.status(400).json({
         success: false,
-        message: `No posts.`
+        posts: []
       });
     }
     return res.status(200).json({
