@@ -181,6 +181,68 @@ router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) =>
     
 });
 
+router.put('/cover', requireSignin, upload.single('avatar') ,async (req,res) => {
+    const user = req.user;
+    const query = user.id;
+    console.log(req.file);    
+    const fileName = req.file.filename;
+
+    try {
+        const resultUploadFile = await uploadFile(fileName);
+        if(!resultUploadFile.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Upload Image Fail."
+            });
+        }
+        const resultUrlFile = await generatePublicUrl(resultUploadFile.data.id);
+
+        if(!resultUrlFile.success){
+            return res.status(400).json({
+                success: false,
+                message: "Generate Public Url Image Fail."
+            });
+        }
+
+        const update = {
+            avatar: {
+                id: resultUploadFile.data.id,
+                viewUrl: resultUrlFile.data.thumbnailLink,
+                downloadUrl: resultUrlFile.data.webContentLink
+            }
+        }
+
+
+
+        const updateTime = Date.now();
+        update.update = updateTime;
+        const _user = await User.findByIdAndUpdate(query, update, {new: true});
+        
+        res.status(200).json({
+            success: true,
+            message: 'Your profile is successfully updated!',
+            user : {
+                _id: _user._id,
+                email: _user.email,
+                phoneNumber: _user.phoneNumber,
+                name: {
+                    firstName: _user.firstName,
+                    lastName: _user.lastName
+                },
+                avatar: _user.avatar,
+                gender: _user.gender,
+                role: _user.role
+            }
+        })
+    } catch (error) {
+        res.status(500).json({ 
+            success: false,
+            error: 'Your request could not be processed. Please try again.' 
+        });
+    }
+    
+});
+
 router.delete('/avatar/:id', requireSignin, async (req,res) => {
     const user = req.user;
     const query = user.id;

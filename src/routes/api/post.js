@@ -29,7 +29,7 @@ const uploadImages = async (images) => {
         }
         result.push( {
           id: resultUploadFile.data.id,
-          viewUrl: resultUrlFile.data.webViewLink,
+          viewUrl: resultUrlFile.data.thumbnailLink,
           downloadUrl: resultUrlFile.data.webContentLink
         });
       }
@@ -135,48 +135,6 @@ router.put('/:id/text', requireSignin, async (req,res) => {
 
 });
 
-// router.put("/:id/images", requireSignin, upload.array("image"), async (req,res) => {
-//   const user = req.user.id;
-//   const id = req.params.id;
-//   const query = {
-//     _id: id,
-//     createBy: user
-//   }
-//   const update = {};
-//   if(files.length > 0){
-//     const upload = await uploadImages(files);
-//     if(!upload.success){
-//       return res.status(400).json({
-//         success: false,
-//         message: upload.message
-//       });
-//     }
-
-//     update.imgs = upload.result;
-//   }
-
-//   await Post.findOneAndUpdate(query, update, {new: true})
-//   .exec((err, _post) => {
-//     if(err) 
-//       return res.status(400).json({
-//         error: 'Your request could not be processed. Please try again.'
-//       });
-
-//     if(!_post)
-//       return res.status(400).json({
-//         success: false,
-//         message: `You can't update this post.`
-//       });
-    
-//     return res.status(200).json({
-//       success: true,
-//       message: 'Update post successfully.',
-//       post: _post
-//     });
-
-//   });
-// });
-
 router.delete('/:id', requireSignin, async (req,res) => {
   const user = req.user.id;
   const id = req.params.id;
@@ -209,6 +167,33 @@ router.delete('/:id', requireSignin, async (req,res) => {
   });
 });
 
+
+router.get('/:userId?', async (req,res) => {
+
+  const userId = req.params.userId;
+  const {page, limit} = req.query;
+
+  
+
+  await Post.find({createBy: userId}, {}).sort({"createAt": "desc"}).skip(Number(page)).limit(Number(limit))
+  .exec((err,posts) => {
+    if(err){
+      return res.status(400).json({
+        error: err
+      });
+    }
+    if(posts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: `No posts.`
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      posts: posts
+    });
+  });
+})
 
 
 module.exports = router;
