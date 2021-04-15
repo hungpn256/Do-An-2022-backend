@@ -175,7 +175,7 @@ router.get('/:userId?', async (req,res) => {
 
   
 
-  await Post.find({createBy: userId}, {}).sort({"createAt": "desc"}).skip(Number(page)).limit(Number(limit))
+  await Post.find({createBy: userId}, {}).sort({"createAt": "desc"}).skip((Number(page)-1)*(+limit)).limit(Number(limit))
   .exec((err,posts) => {
     if(err){
       return res.status(400).json({
