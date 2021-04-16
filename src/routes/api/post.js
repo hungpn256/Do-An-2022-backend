@@ -175,19 +175,19 @@ router.get('/:userId?', async (req,res) => {
 
   
 
-  await Post.find({createBy: userId}, {}).sort({"createAt": "desc"}).skip((Number(page)-1)*(+limit)).limit(Number(limit))
+  await Post.find({createBy: userId}, {})
+  .sort({"createAt": "desc"})
+  .skip((Number(page)-1)*(+limit))
+  .limit(Number(limit))
+  .populate('createBy')
   .exec((err,posts) => {
     if(err){
       return res.status(400).json({
         error: err
       });
     }
-    // if(posts.length === 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     posts: []
-    //   });
-    // }
+    
+  
     return res.status(200).json({
       success: true,
       posts: posts
