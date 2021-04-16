@@ -33,12 +33,6 @@ const userSchema = new mongoose.Schema({
     },
     location: String,
     relation: String,
-    friends: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User'
-        }
-    ],
     updated: Date,
     created: {
         type: Date,
