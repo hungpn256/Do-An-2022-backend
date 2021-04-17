@@ -31,6 +31,11 @@ const userSchema = new mongoose.Schema({
         viewUrl: String,
         downloadUrl: String
     },
+    cover: {
+        id: String,
+        viewUrl: String,
+        downloadUrl: String
+    },
     location: String,
     relation: String,
     updated: Date,

@@ -171,7 +171,8 @@ router.delete('/:id', requireSignin, async (req,res) => {
 router.get('/:userId?', async (req,res) => {
 
   const userId = req.params.userId;
-  const {page, limit} = req.query;
+  const page = req.query.page ||1;
+  const limit = req.query.limit || 100;
 
   
 

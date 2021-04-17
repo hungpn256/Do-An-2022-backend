@@ -36,6 +36,7 @@ router.get('/profile', requireSignin, async (req,res) => {
                     location: _user.location,
                     relation: _user.relation,
                     avatar: _user.avatar,
+                    cover: _user.cover,
                     gender: _user.gender,
                     role: _user.role
                 }
@@ -43,6 +44,13 @@ router.get('/profile', requireSignin, async (req,res) => {
         }
     });
     
+});
+
+router.get('/search?', async (req,res) => {
+
+    const name = req.query.name;
+    
+
 });
 
 router.get('/:id', async (req,res) => {
@@ -74,6 +82,7 @@ router.get('/:id', async (req,res) => {
                     location: _user.location,
                     relation: _user.relation,
                     avatar: _user.avatar,
+                    cover: _user.cover,
                     gender: _user.gender,
                     role: _user.role
                 }
@@ -167,7 +176,10 @@ router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) =>
                     firstName: _user.firstName,
                     lastName: _user.lastName
                 },
+                location: _user.location,
+                relation: _user.relation,
                 avatar: _user.avatar,
+                cover: _user.cover,
                 gender: _user.gender,
                 role: _user.role
             }
@@ -181,7 +193,7 @@ router.put('/avatar', requireSignin, upload.single('avatar') ,async (req,res) =>
     
 });
 
-router.put('/cover', requireSignin, upload.single('avatar') ,async (req,res) => {
+router.put('/cover', requireSignin, upload.single('cover') ,async (req,res) => {
     const user = req.user;
     const query = user.id;
     console.log(req.file);    
@@ -205,7 +217,7 @@ router.put('/cover', requireSignin, upload.single('avatar') ,async (req,res) => 
         }
 
         const update = {
-            avatar: {
+            cover: {
                 id: resultUploadFile.data.id,
                 viewUrl: resultUrlFile.data.thumbnailLink,
                 downloadUrl: resultUrlFile.data.webContentLink
@@ -229,7 +241,10 @@ router.put('/cover', requireSignin, upload.single('avatar') ,async (req,res) => 
                     firstName: _user.firstName,
                     lastName: _user.lastName
                 },
+                location: _user.location,
+                relation: _user.relation,
                 avatar: _user.avatar,
+                cover: _user.cover,
                 gender: _user.gender,
                 role: _user.role
             }

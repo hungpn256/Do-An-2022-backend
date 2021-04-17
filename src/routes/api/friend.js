@@ -3,7 +3,7 @@ const Friend = require('../../models/friend.js');
 
 const router = require('express').Router();
 
-router.post('/make', requireSignin, async (req, res) => {
+router.post( requireSignin, async (req, res) => {
   const user = req.user;
   const friend = req.body.user;
 
@@ -19,9 +19,14 @@ router.post('/make', requireSignin, async (req, res) => {
       });
     }
 
+    const makeFriend = new Friend({user1: user, user2: friend});
+
+    makeFriend.save();
+
     return res.status(200).json({
       success: true,
-      message: 'Make friend successfully.'
+      message: 'Make friend successfully.',
+      makeFriend
     });
   } catch (error) {
     return res.status(400).json({
@@ -30,6 +35,8 @@ router.post('/make', requireSignin, async (req, res) => {
     })
   }
 });
+
+router.get('/:userId', )
 
 
 module.exports = router
