@@ -181,17 +181,38 @@ router.get('/:userId?', async (req,res) => {
   .skip((Number(page)-1)*(+limit))
   .limit(Number(limit))
   .populate('createBy')
-  .exec((err,posts) => {
+  .exec(async (err,posts) => {
     if(err){
       return res.status(400).json({
         error: err
       });
     }
     
+    const _posts = await posts.map(post => {
+      return  {
+        createBy: {
+          avatar: post.createBy.avatar,
+          name: {
+            firstName: post.createBy.firstName,
+            lastName: post.createBy.lastName,
+          },
+          _id: post.createBy._id,
+          phoneNumber: post.createBy.phoneNumber,
+          gender: post.createBy.gender,
+          role: post.createBy.role
+        },
+        imgs: post.imgs,
+        liked: post.liked,
+        text: post.text,
+        numOfCmt: post.numOfCmt,
+        createAt: post.createAt,
+        updateAt: post.updateAt
+      }
+    })
   
     return res.status(200).json({
       success: true,
-      posts: posts
+      posts: _posts
     });
   });
 })
