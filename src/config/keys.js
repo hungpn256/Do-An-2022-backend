@@ -13,5 +13,9 @@ module.exports = {
         REDIRECT_URI: "https://developers.google.com/oauthplayground",
         REFRESH_TOKEN: "1//04E13S0-qAi7iCgYIARAAGAQSNwF-L9Iru62Eluga5dl2p-B8aohXs4S7i64Xn8aQ0JvjHeGaoJ7Sfs5bFgFGCL3rW6cEC0QnpG8"
 
+    },
+    aws: {
+        secretKey: "As1jIx7lkIeNp2Ht7C1PTgAcIGGHJ58paaifsPJl",
+        accessKey: "AKIAYDX3CKBH7TP64BXH"
     }
 }

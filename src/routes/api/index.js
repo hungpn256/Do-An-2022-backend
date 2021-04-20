@@ -4,6 +4,7 @@ const authRoutes = require('./auth.js');
 const userRoutes = require('./user.js');
 const postRoutes = require('./post.js');
 const friendRoutes = require('./friend.js');
+const imageUploadRoutes = require('./file-upload.js');
 
 // auth routes
 router.use('/auth', authRoutes);
@@ -15,6 +16,8 @@ router.use('/user', userRoutes);
 router.use('/post', postRoutes);
 
 // friend routes
-router.use('/friend', friendRoutes)
+router.use('/friend', friendRoutes);
+
+router.use('/images', imageUploadRoutes);
 
 module.exports = router;

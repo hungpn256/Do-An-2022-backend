@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const Post = require('../../models/post.js');
+const User = require('../../models/user.js');
 
 const { upload } = require('../../helps/upload.js');
 const { requireSignin } = require('../../middleware/index.js');
@@ -78,7 +79,7 @@ router.post('/create', requireSignin, upload.array("image"), async (req,res) => 
   }
 
   const newPost = new Post(post);
-  await newPost.save((err, _post) => {
+  await newPost.save(async (err, _post) => {
     if(err) {
       return res.status(400).json({
         success: false,
@@ -91,6 +92,10 @@ router.post('/create', requireSignin, upload.array("image"), async (req,res) => 
         message: 'You can\'t save post.'
       });
     }
+    const _user = await User.findById(user.id);
+    _user.password = null;
+    _post.createBy = _user;
+
     return res.status(200).json({
       success: true,
       message: 'Create post successfully.',
@@ -123,6 +128,8 @@ router.put('/:id/text', requireSignin, async (req,res) => {
         success: false,
         message: `You can't update this post.`
       });
+    
+    
     
     return res.status(200).json({
       success: true,
