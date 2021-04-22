@@ -49,7 +49,7 @@ router.get('/profile', requireSignin, async (req, res) => {
   });
 });
 
-router.get('/suggest', requireSignin, async (req, res) => {
+router.get('/recomment', requireSignin, async (req, res) => {
 
   const userId = req.user._id;
   const suggestedUsers = [];
