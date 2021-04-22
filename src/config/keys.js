@@ -15,7 +15,7 @@ module.exports = {
 
     },
     aws: {
-        secretKey: "As1jIx7lkIeNp2Ht7C1PTgAcIGGHJ58paaifsPJl",
-        accessKey: "AKIAYDX3CKBH7TP64BXH"
+        secretKey: "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",
+        accessKey: "AKIAYDX3CKBH2CMWPNVB"
     }
 }
