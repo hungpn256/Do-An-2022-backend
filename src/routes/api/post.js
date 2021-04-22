@@ -2,227 +2,234 @@ const router = require('express').Router();
 const Post = require('../../models/post.js');
 const User = require('../../models/user.js');
 
-const { upload } = require('../../helps/upload.js');
+const upload = require('../../services/file-upload');
 const { requireSignin } = require('../../middleware/index.js');
-const { uploadFile, generatePublicUrl, deleteFile } = require('../../helps/google_drive_api.js')
+const {
+  uploadFile,
+  generatePublicUrl,
+  deleteFile,
+} = require('../../helps/google_drive_api.js');
 
 const uploadImages = async (images) => {
-
   const result = [];
 
   try {
-    if(Array.isArray(images)){
-      for( let image of images) {
+    if (Array.isArray(images)) {
+      for (let image of images) {
         const resultUploadFile = await uploadFile(image.filename);
-        if(!resultUploadFile.success) {
-            return {
-                success: false,
-                message: "Upload Image Fail."
-            };
+        if (!resultUploadFile.success) {
+          return {
+            success: false,
+            message: 'Upload Image Fail.',
+          };
         }
-        const resultUrlFile = await generatePublicUrl(resultUploadFile.data.id);
-    
-        if(!resultUrlFile.success){
-            return {
-                success: false,
-                message: "Generate Public Url Image Fail."
-            };
+        const resultUrlFile = await generatePublicUrl(
+          resultUploadFile.data.id,
+        );
+
+        if (!resultUrlFile.success) {
+          return {
+            success: false,
+            message: 'Generate Public Url Image Fail.',
+          };
         }
-        result.push( {
-          id: resultUploadFile.data.id,
-          viewUrl: resultUrlFile.data.thumbnailLink,
-          downloadUrl: resultUrlFile.data.webContentLink
+        result.push({
+          viewUrl: req.file.location,
         });
       }
       return {
         success: true,
-        result
-      }
-    }
-    else {
+        result,
+      };
+    } else {
       return {
         success: false,
-        message: 'Images are not a array.'
+        message: 'Images are not a array.',
       };
     }
   } catch (error) {
     return {
       success: false,
-      message: 'Your request could not be processed. Please try again.'
+      message:
+        'Your request could not be processed. Please try again.',
     };
   }
-
 };
 
+router.post(
+  '/create',
+  requireSignin,
+  upload.array('image'),
+  async (req, res) => {
+    const user = req.user;
+    const { text } = req.body;
+    const files = req.files;
 
+    const post = {
+      text,
+      createBy: user.id,
+    };
 
-router.post('/create', requireSignin, upload.array("image"), async (req,res) => {
-  const user = req.user;
-  const {text} =  req.body;
-  const files = req.files;
-
-  const post = {
-    text,
-    createBy: user.id
-  }
-
-  if(files.length > 0){
-    const upload = await uploadImages(files);
-    if(!upload.success){
-      return res.status(400).json({
-        success: false,
-        message: upload.message
-      });
+    if (files.length > 0) {
+      post.imgs = {
+        viewUrl: req.files[0].location,
+      };
     }
 
-    post.imgs = upload.result;
-  }
+    const newPost = new Post(post);
+    await newPost.save(async (err, _post) => {
+      if (err) {
+        return res.status(400).json({
+          success: false,
+          message:
+            'Your request could not be processed. Please try again.',
+        });
+      }
+      if (!_post) {
+        return res.status(400).json({
+          success: false,
+          message: "You can't save post.",
+        });
+      }
+      let _user = await User.findById(user.id);
+      _user.password = null;
 
-  const newPost = new Post(post);
-  await newPost.save(async (err, _post) => {
-    if(err) {
-      return res.status(400).json({
-        success: false,
-        message: 'Your request could not be processed. Please try again.'
+      return res.status(200).json({
+        success: true,
+        message: 'Create post successfully.',
+        post: {
+          createBy: {
+            avatar: _user.avatar,
+            name: {
+              firstName: _user.firstName,
+              lastName: _user.lastName,
+            },
+            _id: _user._id,
+            phoneNumber: _user.phoneNumber,
+            gender: _user.gender,
+            role: _user.role,
+          },
+          imgs: _post.imgs,
+          liked: _post.liked,
+          text: _post.text,
+          numOfCmt: _post.numOfCmt,
+          createAt: _post.createAt,
+          updateAt: _post.updateAt,
+        },
       });
-    }
-    if(!_post) {
-      return res.status(400).json({
-        success: false,
-        message: 'You can\'t save post.'
-      });
-    }
-    const _user = await User.findById(user.id);
-    _user.password = null;
-    _post.createBy = _user;
-
-    return res.status(200).json({
-      success: true,
-      message: 'Create post successfully.',
-      post: _post
     });
-  });
-});
+  },
+);
 
-router.put('/:id/text', requireSignin, async (req,res) => {
+router.put('/:id/text', requireSignin, async (req, res) => {
   const user = req.user.id;
   const id = req.params.id;
   const query = {
     _id: id,
-    createBy: user
-  }
+    createBy: user,
+  };
 
   const update = {
-    text: req.body.text
-  }
+    text: req.body.text,
+  };
 
-  await Post.findOneAndUpdate(query, update, {new: true})
-  .exec((err, _post) => {
-    if(err) 
-      return res.status(400).json({
-        error: 'Your request could not be processed. Please try again.'
+  await Post.findOneAndUpdate(query, update, { new: true }).exec(
+    (err, _post) => {
+      if (err)
+        return res.status(400).json({
+          error:
+            'Your request could not be processed. Please try again.',
+        });
+
+      if (!_post)
+        return res.status(400).json({
+          success: false,
+          message: `You can't update this post.`,
+        });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Update post successfully.',
+        post: _post,
       });
-
-    if(!_post)
-      return res.status(400).json({
-        success: false,
-        message: `You can't update this post.`
-      });
-    
-    
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Update post successfully.',
-      post: _post
-    });
-
-  });
-    
-
+    },
+  );
 });
 
-router.delete('/:id', requireSignin, async (req,res) => {
+router.delete('/:id', requireSignin, async (req, res) => {
   const user = req.user.id;
   const id = req.params.id;
   const query = {
     _id: id,
-    createBy: user
-  }
+    createBy: user,
+  };
   const update = req.body;
 
-
-  await Post.findOneAndDelete(query, update)
-  .exec((err, _post) => {
-    if(err) 
+  await Post.findOneAndDelete(query, update).exec((err, _post) => {
+    if (err)
       return res.status(400).json({
-        error: 'Your request could not be processed. Please try again.'
+        error:
+          'Your request could not be processed. Please try again.',
       });
 
-    if(!_post)
+    if (!_post)
       return res.status(400).json({
         success: false,
-        message: `You can't delete this post.`
+        message: `You can't delete this post.`,
       });
-    
+
     return res.status(200).json({
       success: true,
       message: 'Delete post successfully.',
-      post: _post
+      post: _post,
     });
-
   });
 });
 
-
-router.get('/:userId?', async (req,res) => {
-
+router.get('/:userId?', async (req, res) => {
   const userId = req.params.userId;
-  const page = req.query.page ||1;
+  const page = req.query.page || 1;
   const limit = req.query.limit || 100;
 
-  
-
-  await Post.find({createBy: userId}, {})
-  .sort({"createAt": "desc"})
-  .skip((Number(page)-1)*(+limit))
-  .limit(Number(limit))
-  .populate('createBy')
-  .exec(async (err,posts) => {
-    if(err){
-      return res.status(400).json({
-        error: err
-      });
-    }
-    
-    const _posts = await posts.map(post => {
-      return  {
-        createBy: {
-          avatar: post.createBy.avatar,
-          name: {
-            firstName: post.createBy.firstName,
-            lastName: post.createBy.lastName,
-          },
-          _id: post.createBy._id,
-          phoneNumber: post.createBy.phoneNumber,
-          gender: post.createBy.gender,
-          role: post.createBy.role
-        },
-        imgs: post.imgs,
-        liked: post.liked,
-        text: post.text,
-        numOfCmt: post.numOfCmt,
-        createAt: post.createAt,
-        updateAt: post.updateAt
+  await Post.find({ createBy: userId }, {})
+    .sort({ createAt: 'desc' })
+    .skip((Number(page) - 1) * +limit)
+    .limit(Number(limit))
+    .populate('createBy')
+    .exec(async (err, posts) => {
+      if (err) {
+        return res.status(400).json({
+          error: err,
+        });
       }
-    })
-  
-    return res.status(200).json({
-      success: true,
-      posts: _posts
-    });
-  });
-})
 
+      const _posts = await posts.map((post) => {
+        return {
+          createBy: {
+            avatar: post.createBy.avatar,
+            name: {
+              firstName: post.createBy.firstName,
+              lastName: post.createBy.lastName,
+            },
+            _id: post.createBy._id,
+            phoneNumber: post.createBy.phoneNumber,
+            gender: post.createBy.gender,
+            role: post.createBy.role,
+          },
+          imgs: post.imgs,
+          liked: post.liked,
+          text: post.text,
+          numOfCmt: post.numOfCmt,
+          createAt: post.createAt,
+          updateAt: post.updateAt,
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: _posts,
+      });
+    });
+});
 
 module.exports = router;
