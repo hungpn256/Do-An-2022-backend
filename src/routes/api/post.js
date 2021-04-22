@@ -10,51 +10,51 @@ const {
   deleteFile,
 } = require('../../helps/google_drive_api.js');
 
-const uploadImages = async (images) => {
-  const result = [];
+// const uploadImages = async (images) => {
+//   const result = [];
 
-  try {
-    if (Array.isArray(images)) {
-      for (let image of images) {
-        const resultUploadFile = await uploadFile(image.filename);
-        if (!resultUploadFile.success) {
-          return {
-            success: false,
-            message: 'Upload Image Fail.',
-          };
-        }
-        const resultUrlFile = await generatePublicUrl(
-          resultUploadFile.data.id,
-        );
+//   try {
+//     if (Array.isArray(images)) {
+//       for (let image of images) {
+//         const resultUploadFile = await uploadFile(image.filename);
+//         if (!resultUploadFile.success) {
+//           return {
+//             success: false,
+//             message: 'Upload Image Fail.',
+//           };
+//         }
+//         const resultUrlFile = await generatePublicUrl(
+//           resultUploadFile.data.id,
+//         );
 
-        if (!resultUrlFile.success) {
-          return {
-            success: false,
-            message: 'Generate Public Url Image Fail.',
-          };
-        }
-        result.push({
-          viewUrl: req.file.location,
-        });
-      }
-      return {
-        success: true,
-        result,
-      };
-    } else {
-      return {
-        success: false,
-        message: 'Images are not a array.',
-      };
-    }
-  } catch (error) {
-    return {
-      success: false,
-      message:
-        'Your request could not be processed. Please try again.',
-    };
-  }
-};
+//         if (!resultUrlFile.success) {
+//           return {
+//             success: false,
+//             message: 'Generate Public Url Image Fail.',
+//           };
+//         }
+//         result.push({
+//           viewUrl: req.file.location,
+//         });
+//       }
+//       return {
+//         success: true,
+//         result,
+//       };
+//     } else {
+//       return {
+//         success: false,
+//         message: 'Images are not a array.',
+//       };
+//     }
+//   } catch (error) {
+//     return {
+//       success: false,
+//       message:
+//         'Your request could not be processed. Please try again.',
+//     };
+//   }
+// };
 
 router.post(
   '/create',
@@ -186,7 +186,52 @@ router.delete('/:id', requireSignin, async (req, res) => {
   });
 });
 
-router.get('/:userId?', async (req, res) => {
+router.get('/', async (req, res) => {
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 100;
+
+  await Post.find()
+    .sort({ createAt: 'desc' })
+    .skip((Number(page) - 1) * +limit)
+    .limit(Number(limit))
+    .populate('createBy')
+    .exec(async (err, posts) => {
+      if (err) {
+        return res.status(400).json({
+          error: err,
+        });
+      }
+
+      const _posts = await posts.map((post) => {
+        return {
+          createBy: {
+            avatar: post.createBy.avatar,
+            name: {
+              firstName: post.createBy.firstName,
+              lastName: post.createBy.lastName,
+            },
+            _id: post.createBy._id,
+            phoneNumber: post.createBy.phoneNumber,
+            gender: post.createBy.gender,
+            role: post.createBy.role,
+          },
+          imgs: post.imgs,
+          liked: post.liked,
+          text: post.text,
+          numOfCmt: post.numOfCmt,
+          createAt: post.createAt,
+          updateAt: post.updateAt,
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: _posts,
+      });
+    });
+});
+
+router.get('/:userId', async (req, res) => {
   const userId = req.params.userId;
   const page = req.query.page || 1;
   const limit = req.query.limit || 100;
