@@ -49,17 +49,36 @@ router.get('/profile', requireSignin, async (req, res) => {
   });
 });
 
-// router.get('/suggest', requireSignin, async (req, res) => {
+router.get('/suggest', requireSignin, async (req, res) => {
 
-//   const userId = req.user.id;
-//   const suggestedUsers = [];
+  const userId = req.user._id;
+  const suggestedUsers = [];
+  try {
+    const numOfUser = await User.estimatedDocumentCount();
+    for(let i = 0; i < 5; i++){
+      const count = Math.floor(Math.random()*numOfUser);
+      const _user = await User.find({_id:{$ne: userId}}).skip(count).limit(1);
 
-//   const numOfUser = await User.estimatedDocumentCount();
-//   for(let i = 0; i < 5; i++){
-//     const count = 
-//   }
-//   return res.json(suggestedUsers);
-// })
+      if(_user){
+        let __user = {
+          name: {
+            firstName: _user[0].firstName,
+            lastName: _user[0].lastName,
+          },
+          avatar: _user[0].avatar
+        }
+        suggestedUsers.push(__user);
+      }
+    }
+    return res.json(suggestedUsers);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: 'Your request could not be processed. Please try again.',
+    });
+  }
+  
+})
 
 router.get('/search?', async (req, res) => {
   const name = req.query.name;
