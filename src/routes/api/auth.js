@@ -60,7 +60,7 @@ router.post('/register', validateSignupRequest, isRequestValidated, (req,res) =>
                     return res.status(201).json({
                         success: true,
                         user: {
-                            id: user._id,
+                            _id: user._id,
                             email: user.email,
                             phoneNumber: user.phoneNumber,
                             name: {
@@ -100,7 +100,7 @@ router.post('/login', validateSigninRequest, isRequestValidated, (req,res) => {
         bcrypt.compare(password,user.password).then(isMatch => {
             if(isMatch) {
                 const payload = {
-                    id: user.id
+                    _id: user._id
                 };
 
                 jwt.sign(payload, secret, {expiresIn: tokenLife}, (err,token) => {
@@ -108,7 +108,7 @@ router.post('/login', validateSigninRequest, isRequestValidated, (req,res) => {
                         success: true,
                         token: `Bearer ${token}`,
                         user: {
-                            id: user._id,
+                            _id: user._id,
                             email: user.email,
                             phoneNumber: user.phoneNumber,
                             name: {

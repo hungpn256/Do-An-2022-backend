@@ -14,7 +14,7 @@ const {
 
 router.get('/profile', requireSignin, async (req, res) => {
   const user = req.user;
-  User.findById(user.id).exec((err, _user) => {
+  User.findById(user._id).exec((err, _user) => {
     if (err)
       return res.status(500).json({
         success: false,
@@ -48,6 +48,18 @@ router.get('/profile', requireSignin, async (req, res) => {
     }
   });
 });
+
+// router.get('/suggest', requireSignin, async (req, res) => {
+
+//   const userId = req.user.id;
+//   const suggestedUsers = [];
+
+//   const numOfUser = await User.estimatedDocumentCount();
+//   for(let i = 0; i < 5; i++){
+//     const count = 
+//   }
+//   return res.json(suggestedUsers);
+// })
 
 router.get('/search?', async (req, res) => {
   const name = req.query.name;
@@ -94,7 +106,7 @@ router.get('/:id', async (req, res) => {
 router.put('/profile', requireSignin, async (req, res) => {
   const user = req.user;
   const update = req.body;
-  const query = user.id;
+  const query = user._id;
   try {
     const updateTime = Date.now();
     update.update = updateTime;
@@ -134,7 +146,7 @@ router.put(
   upload.single('avatar'),
   async (req, res) => {
     const user = req.user;
-    const query = user.id;
+    const query = user._id;
     console.log(req.file);
     const fileName = req.file.filename;
 
@@ -186,7 +198,7 @@ router.put(
   upload.single('cover'),
   async (req, res) => {
     const user = req.user;
-    const query = user.id;
+    const query = user._id;
     console.log(req.file);
     const fileName = req.file.filename;
 
@@ -252,7 +264,7 @@ router.put(
 
 router.delete('/avatar/:id', requireSignin, async (req, res) => {
   const user = req.user;
-  const query = user.id;
+  const query = user._id;
   const fileId = req.params.id;
 
   const update = {

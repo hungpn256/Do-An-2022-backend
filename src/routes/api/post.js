@@ -67,7 +67,7 @@ router.post(
 
     const post = {
       text,
-      createBy: user.id,
+      createBy: user._id,
     };
 
     if (files.length > 0) {
@@ -91,7 +91,7 @@ router.post(
           message: "You can't save post.",
         });
       }
-      let _user = await User.findById(user.id);
+      let _user = await User.findById(user._id);
       _user.password = null;
 
       return res.status(200).json({
@@ -122,7 +122,7 @@ router.post(
 );
 
 router.put('/:id/text', requireSignin, async (req, res) => {
-  const user = req.user.id;
+  const user = req.user._id;
   const id = req.params.id;
   const query = {
     _id: id,
@@ -157,7 +157,7 @@ router.put('/:id/text', requireSignin, async (req, res) => {
 });
 
 router.delete('/:id', requireSignin, async (req, res) => {
-  const user = req.user.id;
+  const user = req.user._id;
   const id = req.params.id;
   const query = {
     _id: id,
