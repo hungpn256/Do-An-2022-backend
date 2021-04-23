@@ -37,6 +37,7 @@ router.get('/profile', requireSignin, async (req, res) => {
             firstName: _user.firstName,
             lastName: _user.lastName,
           },
+          follow: _user.follow,
           location: _user.location,
           relation: _user.relation,
           avatar: _user.avatar,
@@ -59,8 +60,9 @@ router.get('/recomment', requireSignin, async (req, res) => {
       const count = Math.floor(Math.random()*numOfUser);
       const _user = await User.find({_id:{$ne: userId}}).skip(count).limit(1);
 
-      if(_user){
+      if(_user.length>0 && _user[0]._id !== userId && !suggestedUsers.some(v =>v._id === _user[0])){
         let __user = {
+          _id: _user[0]._id,
           name: {
             firstName: _user[0].firstName,
             lastName: _user[0].lastName,
@@ -69,16 +71,39 @@ router.get('/recomment', requireSignin, async (req, res) => {
         }
         suggestedUsers.push(__user);
       }
+      else{
+        i--;
+      }
     }
     return res.json(suggestedUsers);
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Your request could not be processed. Please try again.',
     });
   }
   
-})
+});
+
+router.put('/follow/:userId', requireSignin, async (req,res) => {
+  const _id = req.user._id;
+  const _userId = req.params.userId;
+
+  await User.findById(_id).exec((err, user) => {
+    if(err) {
+      return res.status(500).json({
+        success: false,
+        error: 'Your request could not be processed. Please try again.',
+      });
+    }
+    user.follow = [...user.follow, _userId];
+    user.save();
+    return res.status(200).json({
+      success: true,
+      message: "Follow successfully."
+    })
+  });
+});
 
 router.get('/search?', async (req, res) => {
   const name = req.query.name;
