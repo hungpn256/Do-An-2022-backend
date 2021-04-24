@@ -2,15 +2,9 @@ const router = require('express').Router();
 
 const { requireSignin, checkLogin } = require('../../middleware/index.js');
 
-const upload = require('../../services/file-upload');
-
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
-const {
-  uploadFile,
-  generatePublicUrl,
-  deleteFile,
-} = require('../../helps/google_drive_api.js');
+
 
 router.get('/profile', requireSignin, async (req, res) => {
   const user = req.user;
