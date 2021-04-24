@@ -12,3 +12,15 @@ exports.requireSignin = (req,res,next) => {
     }
     next();
 };
+
+exports.checkLogin = (req,res,next) => {
+    if(req.headers.authorization){
+        const token = req.headers.authorization.split(' ')[1];
+        const user = jwt.verify(token, keys.jwt.secret);
+        req.user = user;
+        
+    }else{
+        req.user = 3;
+    }
+    next();
+};
