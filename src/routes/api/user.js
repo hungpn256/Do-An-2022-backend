@@ -185,6 +185,7 @@ router.put('/profile', requireSignin, async (req, res) => {
         location: _user.location,
         relation: _user.relation,
         avatar: _user.avatar,
+        cover: _user.cover,
         gender: _user.gender,
         role: _user.role,
       },
