@@ -2,79 +2,23 @@ const router = require('express').Router();
 const Post = require('../../models/post.js');
 const User = require('../../models/user.js');
 
-const upload = require('../../services/file-upload');
 const { requireSignin } = require('../../middleware/index.js');
-const {
-  uploadFile,
-  generatePublicUrl,
-  deleteFile,
-} = require('../../helps/google_drive_api.js');
 
-// const uploadImages = async (images) => {
-//   const result = [];
-
-//   try {
-//     if (Array.isArray(images)) {
-//       for (let image of images) {
-//         const resultUploadFile = await uploadFile(image.filename);
-//         if (!resultUploadFile.success) {
-//           return {
-//             success: false,
-//             message: 'Upload Image Fail.',
-//           };
-//         }
-//         const resultUrlFile = await generatePublicUrl(
-//           resultUploadFile.data.id,
-//         );
-
-//         if (!resultUrlFile.success) {
-//           return {
-//             success: false,
-//             message: 'Generate Public Url Image Fail.',
-//           };
-//         }
-//         result.push({
-//           viewUrl: req.file.location,
-//         });
-//       }
-//       return {
-//         success: true,
-//         result,
-//       };
-//     } else {
-//       return {
-//         success: false,
-//         message: 'Images are not a array.',
-//       };
-//     }
-//   } catch (error) {
-//     return {
-//       success: false,
-//       message:
-//         'Your request could not be processed. Please try again.',
-//     };
-//   }
-// };
 
 router.post(
   '/create',
   requireSignin,
-  upload.array('image'),
   async (req, res) => {
     const user = req.user;
-    const { text } = req.body;
+    const { text, images } = req.body;
     const files = req.files;
 
     const post = {
       text,
       createBy: user._id,
+      images: images
     };
 
-    if (files.length > 0) {
-      post.imgs = {
-        viewUrl: req.files[0].location,
-      };
-    }
 
     const newPost = new Post(post);
     await newPost.save(async (err, _post) => {
@@ -109,7 +53,7 @@ router.post(
             gender: _user.gender,
             role: _user.role,
           },
-          imgs: _post.imgs,
+          images: _post.images,
           liked: _post.liked,
           text: _post.text,
           numOfCmt: _post.numOfCmt,

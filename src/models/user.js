@@ -26,16 +26,8 @@ const userSchema = new mongoose.Schema({
     enum: [0, 1, 2],
     require: true,
   },
-  avatar: {
-    id: String,
-    viewUrl: String,
-    downloadUrl: String,
-  },
-  cover: {
-    id: String,
-    viewUrl: String,
-    downloadUrl: String,
-  },
+  avatar: String,
+  cover: String,
   location: String,
   relation: String,
   updated: Date,
