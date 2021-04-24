@@ -11,7 +11,6 @@ router.post(
   async (req, res) => {
     const user = req.user;
     const { text, images } = req.body;
-    const files = req.files;
 
     const post = {
       text,
