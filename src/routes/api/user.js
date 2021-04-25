@@ -51,10 +51,21 @@ router.get('/recomment', requireSignin, async (req, res) => {
   try {
     const currentUser = await User.findById(userId);
     const userFollow = currentUser.follow;
-    const suggestedUsers = await User.find({$and: [
+    let suggestedUsers = await User.find({$and: [
       { _id: {$ne: userId}},
       { _id: {$nin: userFollow }}
     ]}).limit(5);
+    suggestedUsers = suggestedUsers.map(v => {
+      return {
+
+        _id: v._id,
+        name: {
+          firstName: v.firstName,
+          lastName: v.lastName,
+        },
+        avatar: v.avatar
+      }
+    });
     return res.status(200).json(suggestedUsers)
   } catch (error) {
     return res.status(500).json({
