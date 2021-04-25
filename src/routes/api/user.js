@@ -90,12 +90,25 @@ router.put('/follow/:userId', requireSignin, async (req,res) => {
         error: 'Your request could not be processed. Please try again.',
       });
     }
-    user.follow = [...user.follow, _userId];
-    user.save();
-    return res.status(200).json({
-      success: true,
-      message: "Follow successfully."
-    })
+    if(user.follow.length>0 && user.follow.includes(_userId)) {
+      const filtered = user.follow.filter(function(value, index, arr){
+        return value != _userId;
+      });
+      user.follow = filtered;
+      user.save();
+      return res.status(200).json({
+        success: true,
+        message: "Unfollow successfully."
+      })
+    }
+    else{
+      user.follow = [...user.follow, _userId];
+      user.save();
+      return res.status(200).json({
+        success: true,
+        message: "Follow successfully."
+      })
+    }
   });
 });
 
