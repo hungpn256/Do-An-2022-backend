@@ -47,29 +47,15 @@ router.get('/profile', requireSignin, async (req, res) => {
 router.get('/recomment', requireSignin, async (req, res) => {
 
   const userId = req.user._id;
-  const suggestedUsers = [];
+  
   try {
-    const numOfUser = await User.estimatedDocumentCount();
-    for(let i = 0; i < 5; i++){
-      const count = Math.floor(Math.random()*numOfUser);
-      const _user = await User.find({_id:{$ne: userId}}).skip(count).limit(1);
-
-      if(_user.length>0 && _user[0]._id !== userId && !suggestedUsers.some(v =>v._id === _user[0])){
-        let __user = {
-          _id: _user[0]._id,
-          name: {
-            firstName: _user[0].firstName,
-            lastName: _user[0].lastName,
-          },
-          avatar: _user[0].avatar
-        }
-        suggestedUsers.push(__user);
-      }
-      else{
-        i--;
-      }
-    }
-    return res.json(suggestedUsers);
+    const currentUser = await User.findById(userId);
+    const userFollow = currentUser.follow;
+    const suggestedUsers = await User.find({$and: [
+      { _id: {$ne: userId}},
+      { _id: {$nin: userFollow }}
+    ]}).limit(5);
+    return res.status(200).json(suggestedUsers)
   } catch (error) {
     return res.status(500).json({
       success: false,
