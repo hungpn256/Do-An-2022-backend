@@ -4,66 +4,62 @@ const User = require('../../models/user.js');
 
 const { requireSignin } = require('../../middleware/index.js');
 
+router.post('/create', requireSignin, async (req, res) => {
+  const user = req.user;
+  const { text, images, action } = req.body;
 
-router.post(
-  '/create',
-  requireSignin,
-  async (req, res) => {
-    const user = req.user;
-    const { text, images } = req.body;
+  const post = {
+    text,
+    createBy: user._id,
+    images: images,
+    action,
+  };
 
-    const post = {
-      text,
-      createBy: user._id,
-      images: images
-    };
-
-
-    const newPost = new Post(post);
-    await newPost.save(async (err, _post) => {
-      if (err) {
-        return res.status(400).json({
-          success: false,
-          message:
-            'Your request could not be processed. Please try again.',
-        });
-      }
-      if (!_post) {
-        return res.status(400).json({
-          success: false,
-          message: "You can't save post.",
-        });
-      }
-      let _user = await User.findById(user._id);
-      _user.password = null;
-
-      return res.status(200).json({
-        success: true,
-        message: 'Create post successfully.',
-        post: {
-          createBy: {
-            avatar: _user.avatar,
-            name: {
-              firstName: _user.firstName,
-              lastName: _user.lastName,
-            },
-            _id: _user._id,
-            phoneNumber: _user.phoneNumber,
-            gender: _user.gender,
-            role: _user.role,
-          },
-          _id: _post._id,
-          images: _post.images,
-          liked: _post.liked,
-          text: _post.text,
-          numOfCmt: _post.numOfCmt,
-          createAt: _post.createAt,
-          updateAt: _post.updateAt,
-        },
+  const newPost = new Post(post);
+  await newPost.save(async (err, _post) => {
+    if (err) {
+      return res.status(400).json({
+        success: false,
+        message:
+          'Your request could not be processed. Please try again.',
       });
+    }
+    if (!_post) {
+      return res.status(400).json({
+        success: false,
+        message: "You can't save post.",
+      });
+    }
+    let _user = await User.findById(user._id);
+    _user.password = null;
+
+    return res.status(200).json({
+      success: true,
+      message: 'Create post successfully.',
+      post: {
+        createBy: {
+          avatar: _user.avatar,
+          name: {
+            firstName: _user.firstName,
+            lastName: _user.lastName,
+          },
+          _id: _user._id,
+          phoneNumber: _user.phoneNumber,
+          gender: _user.gender,
+          role: _user.role,
+        },
+        _id: _post._id,
+        images: _post.images,
+        liked: _post.liked,
+        text: _post.text,
+        numOfCmt: _post.numOfCmt,
+        createAt: _post.createAt,
+        updateAt: _post.updateAt,
+        action: _post.action,
+      },
     });
-  },
-);
+  });
+});
 
 router.put('/:id/text', requireSignin, async (req, res) => {
   const user = req.user._id;
@@ -166,6 +162,7 @@ router.get('/', async (req, res) => {
           numOfCmt: post.numOfCmt,
           createAt: post.createAt,
           updateAt: post.updateAt,
+          action: post.action,
         };
       });
 
@@ -213,6 +210,7 @@ router.get('/:userId', async (req, res) => {
           numOfCmt: post.numOfCmt,
           createAt: post.createAt,
           updateAt: post.updateAt,
+          action: post.action,
         };
       });
 
