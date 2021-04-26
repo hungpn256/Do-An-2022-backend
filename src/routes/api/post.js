@@ -52,7 +52,7 @@ router.post(
             gender: _user.gender,
             role: _user.role,
           },
-          _id: post._id,
+          _id: _post._id,
           images: _post.images,
           liked: _post.liked,
           text: _post.text,
