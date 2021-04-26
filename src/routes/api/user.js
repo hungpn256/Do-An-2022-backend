@@ -125,7 +125,7 @@ router.get('/:id', checkLogin, async (req, res) => {
 
       const currentUser = await User.findById(userId).catch(err => console.log(err));
   
-      if(currentUser.follow.some(id)){
+      if(currentUser.follow.includes(id)){
         check = 1;
       }
       else {
