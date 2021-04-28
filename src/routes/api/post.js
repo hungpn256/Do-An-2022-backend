@@ -11,7 +11,7 @@ router.post('/create', requireSignin, async (req, res) => {
 
   const post = {
     text,
-    textAccent: removeAccents(text),
+    textAccent: removeAccents(text).toLowerCase(),
     createBy: user._id,
     images: images,
     action,
