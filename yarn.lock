@@ -2411,6 +2411,11 @@ vary@^1, vary@~1.1.2:
   resolved "https://registry.yarnpkg.com/vary/-/vary-1.1.2.tgz#2299f02c6ded30d4a5961b0b9f74524a18f634fc"
   integrity sha1-IpnwLG3tMNSllhsLn3RSShj2NPw=
 
+vietnamese-stopwords@^0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/vietnamese-stopwords/-/vietnamese-stopwords-0.0.2.tgz#f4360e8c14f4715b3612f5f1d785710e90f95118"
+  integrity sha1-9DYOjBT0cVs2EvXx14VxDpD5URg=
+
 websocket-driver@>=0.5.1:
   version "0.7.4"
   resolved "https://registry.yarnpkg.com/websocket-driver/-/websocket-driver-0.7.4.tgz#89ad5295bbf64b480abcba31e4953aca706f5760"

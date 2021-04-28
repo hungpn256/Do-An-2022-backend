@@ -29,6 +29,7 @@
     "passport": "^0.4.1",
     "passport-jwt": "^4.0.0",
     "shortid": "^2.2.16",
-    "validatorjs": "^3.22.1"
+    "validatorjs": "^3.22.1",
+    "vietnamese-stopwords": "^0.0.2"
   }
 }

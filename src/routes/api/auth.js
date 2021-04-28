@@ -6,6 +6,7 @@ const { validateSigninRequest, validateSignupRequest, isRequestValidated } = req
 
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
+const { removeAccents } = require('../../helps/removeAccent.js');
 
 const {secret, tokenLife} = keys.jwt;
 
@@ -38,7 +39,8 @@ router.post('/register', validateSignupRequest, isRequestValidated, (req,res) =>
             password,
             phoneNumber,
             firstName,
-            lastName, 
+            lastName,
+            fullName: removeAccents(`${firstName} ${lastName}`), 
             gender
         });
 

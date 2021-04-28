@@ -5,7 +5,6 @@ const { requireSignin, checkLogin } = require('../../middleware/index.js');
 const User = require('../../models/user.js');
 const keys = require('../../config/keys.js');
 
-
 router.get('/profile', requireSignin, async (req, res) => {
   const user = req.user;
   User.findById(user._id).exec((err, _user) => {

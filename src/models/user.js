@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  fullName: String,
   password: {
     type: String,
     required: true,
@@ -48,11 +49,8 @@ const userSchema = new mongoose.Schema({
   ]
 });
 
-userSchema.virtual('name').set(function () {
-  return {
-    firstName: this.firstName,
-    lastName: this.lastName,
-  };
-});
+// userSchema.virtual('name').set(function () {
+//   return `${this.firstName} ${this.lastName}`
+// });
 
 module.exports = mongoose.model('User', userSchema);

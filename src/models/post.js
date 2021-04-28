@@ -5,6 +5,7 @@ const postSchema = new mongoose.Schema({
   text: {
     type: String,
   },
+  textAccent: String,
   action: {
     type: String,
   },

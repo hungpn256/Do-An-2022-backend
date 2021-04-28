@@ -3,6 +3,7 @@ const Post = require('../../models/post.js');
 const User = require('../../models/user.js');
 
 const { requireSignin } = require('../../middleware/index.js');
+const { removeAccents } = require('../../helps/removeAccent.js');
 
 router.post('/create', requireSignin, async (req, res) => {
   const user = req.user;
@@ -10,6 +11,7 @@ router.post('/create', requireSignin, async (req, res) => {
 
   const post = {
     text,
+    textAccent: removeAccents(text),
     createBy: user._id,
     images: images,
     action,
