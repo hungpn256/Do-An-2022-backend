@@ -53,8 +53,29 @@ router.get('/search', async (req, res) => {
   const qPost = queryVarPost(removeAccents(q));
   console.log(qPost);
   await Post.find(qPost)
+    .populate('createBy', 'firstName lastName avatar')
     .then((posts) => {
-      result.articles = posts;
+      const _posts = posts.map(post => {
+        return {
+          createBy: {
+            avatar: post.createBy.avatar,
+            name: {
+              firstName: post.createBy.firstName,
+              lastName: post.createBy.lastName,
+            },
+            _id: post.createBy._id,
+          },
+          _id: post._id,
+          images: post.images,
+          liked: post.liked,
+          text: post.text,
+          numOfCmt: post.numOfCmt,
+          createAt: post.createAt,
+          updateAt: post.updateAt,
+          action: post.action,
+        }
+      })
+      result.articles = _posts;
     })
     .catch((err) => {
       return res.status(400).json({

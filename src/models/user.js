@@ -49,8 +49,8 @@ const userSchema = new mongoose.Schema({
   ]
 });
 
-// userSchema.virtual('name').set(function () {
-//   return `${this.firstName} ${this.lastName}`
-// });
+userSchema.virtual('name').set(function () {
+  return `${this.firstName} ${this.lastName}`
+});
 
 module.exports = mongoose.model('User', userSchema);
