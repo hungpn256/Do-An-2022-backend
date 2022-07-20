@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-// User Schema
+// Post Schema
 const postSchema = new mongoose.Schema({
   text: {
     type: String,
@@ -14,26 +14,27 @@ const postSchema = new mongoose.Schema({
       url: String,
     },
   ],
-  liked: {
-    type: Number,
-    default: 0,
-  },
-  numOfCmt: {
-    type: Number,
-    default: 0,
-  },
+  liked: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Like',
+  }],
   createBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
-  createAt: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },
-  updateAt: {
+  updatedAt: {
     type: Date,
+    default: Date.now,
   },
+  comment: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Comment',
+  }]
 });
 
 module.exports = mongoose.model('Post', postSchema);

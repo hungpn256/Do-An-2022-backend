@@ -23,25 +23,17 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
   gender: {
-    type: Number,
-    enum: [0, 1, 2],
+    type: String,
+    enum: ['MALE', 'FEMALE', 'OTHER'],
     require: true,
   },
   avatar: String,
   cover: String,
-  location: String,
-  relation: String,
-  updated: Date,
-  created: {
+  createdAt: {
     type: Date,
     default: Date.now,
   },
-  role: {
-    type: String,
-    enum: ['admin', 'user'],
-    default: 'user',
-  },
-  follow: [
+  friend: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'

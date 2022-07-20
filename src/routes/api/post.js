@@ -223,4 +223,34 @@ router.get('/:userId', async (req, res) => {
     });
 });
 
+router.post('/comment/:id', async (req, res) => {
+  const user = req.user._id;
+  const id = req.params.id;
+  const query = {
+    _id: id,
+  };
+  const update = req.body;
+
+  await Post.find(query, update).exec((err, _post) => {
+    if (err)
+      return res.status(400).json({
+        error:
+          'Your request could not be processed. Please try again.',
+      });
+
+    if (!_post)
+      return res.status(400).json({
+        success: false,
+        message: `You can't delete this post.`,
+      });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Delete post successfully.',
+      post: _post,
+    });
+  });
+});
+
+
 module.exports = router;
