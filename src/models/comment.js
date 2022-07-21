@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 // commentSchema
 const commentSchema = new mongoose.Schema({
   content: {
@@ -7,18 +7,20 @@ const commentSchema = new mongoose.Schema({
   file: [
     {
       url: {
-        type: String
-      }
-    }
+        type: String,
+      },
+    },
   ],
-  liked: [{
+  liked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Like",
+    },
+  ],
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Like',
-  }],
-  createBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: "User",
+    required: true,
   },
   createdAt: {
     type: Date,
@@ -26,8 +28,8 @@ const commentSchema = new mongoose.Schema({
   },
   replyTo: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Comment',
-  }
+    ref: "Comment",
+  },
 });
 
-module.exports = mongoose.model('Comment', commentSchema);
+module.exports = mongoose.model("Comment", commentSchema);

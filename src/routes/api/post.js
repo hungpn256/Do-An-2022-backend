@@ -1,17 +1,18 @@
-const router = require('express').Router();
-const Post = require('../../models/post.js');
-const User = require('../../models/user.js');
+const router = require("express").Router();
+const Post = require("../../models/post.js");
+const User = require("../../models/user.js");
+const Comment = require("../../models/comment.js");
 
-const { requireSignin } = require('../../middleware/index.js');
-const { removeAccents } = require('../../helps/removeAccent.js');
+const { requireSignin } = require("../../middleware/index.js");
+const { removeAccents } = require("../../helps/removeAccent.js");
 
-router.post('/create', requireSignin, async (req, res) => {
+router.post("/create", requireSignin, async (req, res) => {
   const user = req.user;
   const { text, images, action } = req.body;
 
   const post = {
     text,
-    textAccent: removeAccents(text).toLowerCase(),
+    textAccent: text ? removeAccents(text).toLowerCase() : null,
     createBy: user._id,
     images: images,
     action,
@@ -22,8 +23,7 @@ router.post('/create', requireSignin, async (req, res) => {
     if (err) {
       return res.status(400).json({
         success: false,
-        message:
-          'Your request could not be processed. Please try again.',
+        message: "Your request could not be processed. Please try again.",
       });
     }
     if (!_post) {
@@ -37,7 +37,7 @@ router.post('/create', requireSignin, async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Create post successfully.',
+      message: "Create post successfully.",
       post: {
         createBy: {
           avatar: _user.avatar,
@@ -54,7 +54,6 @@ router.post('/create', requireSignin, async (req, res) => {
         images: _post.images,
         liked: _post.liked,
         text: _post.text,
-        numOfCmt: _post.numOfCmt,
         createAt: _post.createAt,
         updateAt: _post.updateAt,
         action: _post.action,
@@ -63,7 +62,7 @@ router.post('/create', requireSignin, async (req, res) => {
   });
 });
 
-router.put('/:id/text', requireSignin, async (req, res) => {
+router.put("/:id/text", requireSignin, async (req, res) => {
   const user = req.user._id;
   const id = req.params.id;
   const query = {
@@ -79,8 +78,7 @@ router.put('/:id/text', requireSignin, async (req, res) => {
     (err, _post) => {
       if (err)
         return res.status(400).json({
-          error:
-            'Your request could not be processed. Please try again.',
+          error: "Your request could not be processed. Please try again.",
         });
 
       if (!_post)
@@ -91,14 +89,14 @@ router.put('/:id/text', requireSignin, async (req, res) => {
 
       return res.status(200).json({
         success: true,
-        message: 'Update post successfully.',
+        message: "Update post successfully.",
         post: _post,
       });
-    },
+    }
   );
 });
 
-router.delete('/:id', requireSignin, async (req, res) => {
+router.delete("/:id", requireSignin, async (req, res) => {
   const user = req.user._id;
   const id = req.params.id;
   const query = {
@@ -110,8 +108,7 @@ router.delete('/:id', requireSignin, async (req, res) => {
   await Post.findOneAndDelete(query, update).exec((err, _post) => {
     if (err)
       return res.status(400).json({
-        error:
-          'Your request could not be processed. Please try again.',
+        error: "Your request could not be processed. Please try again.",
       });
 
     if (!_post)
@@ -122,21 +119,28 @@ router.delete('/:id', requireSignin, async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: 'Delete post successfully.',
+      message: "Delete post successfully.",
       post: _post,
     });
   });
 });
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   const page = req.query.page || 1;
   const limit = req.query.limit || 100;
 
   await Post.find()
-    .sort({ createAt: 'desc' })
+    .sort({ createAt: "desc" })
     .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
-    .populate('createBy')
+    .populate("createBy")
+    .populate({
+      path: "comment",
+      populate: {
+        path: "createdBy",
+        model: "User",
+      },
+    })
     .exec(async (err, posts) => {
       if (err) {
         return res.status(400).json({
@@ -161,10 +165,10 @@ router.get('/', async (req, res) => {
           images: post.images,
           liked: post.liked,
           text: post.text,
-          numOfCmt: post.numOfCmt,
           createAt: post.createAt,
           updateAt: post.updateAt,
           action: post.action,
+          comment: post.comment.splice(0, 1),
         };
       });
 
@@ -175,16 +179,23 @@ router.get('/', async (req, res) => {
     });
 });
 
-router.get('/:userId', async (req, res) => {
+router.get("/:userId", async (req, res) => {
   const userId = req.params.userId;
   const page = req.query.page || 1;
-  const limit = req.query.limit || 100;
+  const limit = req.query.limit || 10;
 
   await Post.find({ createBy: userId }, {})
-    .sort({ createAt: 'desc' })
+    .sort({ createAt: "desc" })
     .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
-    .populate('createBy')
+    .populate("createBy")
+    .populate({
+      path: "comment",
+      populate: {
+        path: "createdBy",
+        model: "User",
+      },
+    })
     .exec(async (err, posts) => {
       if (err) {
         return res.status(400).json({
@@ -209,10 +220,11 @@ router.get('/:userId', async (req, res) => {
           images: post.images,
           liked: post.liked,
           text: post.text,
-          numOfCmt: post.numOfCmt,
           createAt: post.createAt,
           updateAt: post.updateAt,
           action: post.action,
+          numOfCmt: post.comment.length,
+          comment: post.comment.splice(-1, 1),
         };
       });
 
@@ -223,34 +235,38 @@ router.get('/:userId', async (req, res) => {
     });
 });
 
-router.post('/comment/:id', async (req, res) => {
-  const user = req.user._id;
-  const id = req.params.id;
-  const query = {
-    _id: id,
-  };
-  const update = req.body;
+router.post("/comment/:id", requireSignin, async (req, res) => {
+  console.log(12);
+  try {
+    const userId = req.user._id;
+    const id = req.params.id;
+    console.log("🚀 ~ file: post.js ~ line 228 ~ router.post ~ id", id);
+    const query = {
+      _id: id,
+    };
 
-  await Post.find(query, update).exec((err, _post) => {
-    if (err)
-      return res.status(400).json({
-        error:
-          'Your request could not be processed. Please try again.',
-      });
-
-    if (!_post)
+    const _post = await Post.find(query);
+    console.log("🚀 ~ file: post.js ~ line 233 ~ router.post ~ _post", _post);
+    if (!_post.length)
       return res.status(400).json({
         success: false,
-        message: `You can't delete this post.`,
+        message: `You can't comment this post.`,
       });
-
+    const _comment = new Comment({ ...req.body.comment, createdBy: userId });
+    const commentSave = await _comment.save();
+    _post[0].comment.push(commentSave._id);
+    await _post[0].save();
     return res.status(200).json({
       success: true,
-      message: 'Delete post successfully.',
-      post: _post,
+      message: "Comment post successfully.",
+      post: _post[0],
     });
-  });
+  } catch (err) {
+    console.log("🚀 ~ file: post.js ~ line 251 ~ router.post ~ err", err);
+    return res.status(400).json({
+      error: "Your request could not be processed. Please try again.",
+    });
+  }
 });
-
 
 module.exports = router;
