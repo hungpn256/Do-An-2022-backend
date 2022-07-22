@@ -26,10 +26,12 @@ const commentSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  replyTo: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Comment",
-  },
+  reply: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+  ],
 });
 
 module.exports = mongoose.model("Comment", commentSchema);

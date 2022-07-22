@@ -240,13 +240,11 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
   try {
     const userId = req.user._id;
     const id = req.params.id;
-    console.log("🚀 ~ file: post.js ~ line 228 ~ router.post ~ id", id);
     const query = {
       _id: id,
     };
 
     const _post = await Post.find(query);
-    console.log("🚀 ~ file: post.js ~ line 233 ~ router.post ~ _post", _post);
     if (!_post.length)
       return res.status(400).json({
         success: false,
@@ -256,13 +254,19 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
     const commentSave = await _comment.save();
     _post[0].comment.push(commentSave._id);
     await _post[0].save();
+    const _postResponse = await Post.find(query).populate({
+      path: "comment",
+      populate: {
+        path: "createdBy",
+        model: "User",
+      },
+    });
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
-      post: _post[0],
+      post: _postResponse[0],
     });
   } catch (err) {
-    console.log("🚀 ~ file: post.js ~ line 251 ~ router.post ~ err", err);
     return res.status(400).json({
       error: "Your request could not be processed. Please try again.",
     });
