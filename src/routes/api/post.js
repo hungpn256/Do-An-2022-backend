@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Post = require("../../models/post.js");
 const User = require("../../models/user.js");
 const Comment = require("../../models/comment.js");
+const Like = require("../../models/like.js");
 
 const { requireSignin } = require("../../middleware/index.js");
 const { removeAccents } = require("../../helps/removeAccent.js");
@@ -136,10 +137,17 @@ router.get("/", async (req, res) => {
     .populate("createBy")
     .populate({
       path: "comment",
-      populate: {
+      populate: [{
         path: "createdBy",
         model: "User",
-      },
+      }, {
+        path: "reply",
+        model: "Comment",
+        populate: {
+          path: "createdBy",
+          model: "User",
+        }
+      }],
     })
     .exec(async (err, posts) => {
       if (err) {
@@ -236,7 +244,6 @@ router.get("/:userId", async (req, res) => {
 });
 
 router.post("/comment/:id", requireSignin, async (req, res) => {
-  console.log(12);
   try {
     const userId = req.user._id;
     const id = req.params.id;
@@ -259,6 +266,8 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
       populate: {
         path: "createdBy",
         model: "User",
+        path: "reply",
+        model: "Comment",
       },
     });
     return res.status(200).json({
@@ -269,6 +278,108 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
   } catch (err) {
     return res.status(400).json({
       error: "Your request could not be processed. Please try again.",
+    });
+  }
+});
+
+router.post("/:postId/rep-comment/:id", requireSignin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const id = req.params.id;
+    const postId = req.params.postId
+    const query = {
+      _id: id,
+    };
+
+    const _comment = await Comment.findOne(query);
+    if (!_comment)
+      return res.status(400).json({
+        success: false,
+        message: `Comment unavailable`,
+      });
+    const _newComment = new Comment({ ...req.body.comment, createdBy: userId });
+    const commentSave = await _newComment.save();
+    _comment.reply.push(commentSave._id);
+    await _comment.save();
+    const _postResponse = await Post.findOne({ _id: postId }).populate({
+      path: "comment",
+      populate: {
+        path: "createdBy",
+        model: "User",
+        path: "reply",
+        model: "Comment",
+      },
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Comment post successfully.",
+      post: _postResponse,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      message: "Your request could not be processed. Please try again.",
+      error: err
+    });
+  }
+});
+
+router.post("/like/:id", requireSignin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const id = req.params.id;
+    const query = {
+      _id: id,
+    };
+    const likeReq = req.body.like;
+
+    const _post = await Post.findOne(query);
+    if (!_post)
+      return res.status(400).json({
+        success: false,
+        message: `You can't comment this post.`,
+      });
+    const likedByCurrentUser = await Like.findOne({
+      _id: {
+        $in: _post.liked
+      },
+      likedBy: userId,
+    })
+    if (likedByCurrentUser && likedByCurrentUser.type === likeReq.type) {
+      _post.liked.splice(_post.liked.indexOf(likedByCurrentUser.id), 1);
+      likedByCurrentUser.delete();
+    } else if (likedByCurrentUser && likedByCurrentUser.type !== likeReq.type) {
+      likedByCurrentUser.type === likeReq.type;
+      await likedByCurrentUser.update({ type: likeReq.type });
+    } else {
+      const _liked = new Like({ ...likeReq, likedBy: userId });
+      const likeSave = await _liked.save();
+      _post.liked.push(likeSave._id);
+    }
+    await _post.save();
+    const _postResponse = await Post.findOne(query).populate({
+      path: "comment",
+      populate: {
+        path: "createdBy",
+        model: "User",
+        path: "reply",
+        model: "Comment",
+      },
+    }).populate({
+      path: "liked",
+      populate: {
+        path: "createdBy",
+        model: "User",
+      },
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Like post successfully.",
+      post: _postResponse,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Your request could not be processed. Please try again.",
+      error
     });
   }
 });
