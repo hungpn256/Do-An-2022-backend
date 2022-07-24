@@ -176,7 +176,8 @@ router.get("/", async (req, res) => {
           createAt: post.createAt,
           updateAt: post.updateAt,
           action: post.action,
-          comment: post.comment.splice(0, 1),
+          numOfCmt: post.comment.length,
+          comment: post.comment.splice(-1, 1),
         };
       });
 
@@ -232,7 +233,7 @@ router.get("/:userId", async (req, res) => {
           updateAt: post.updateAt,
           action: post.action,
           numOfCmt: post.comment.length,
-          comment: post.comment.splice(-1, 1),
+          comment: post.comment.at(-1),
         };
       });
 
@@ -261,19 +262,14 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
     const commentSave = await _comment.save();
     _post[0].comment.push(commentSave._id);
     await _post[0].save();
-    const _postResponse = await Post.find(query).populate({
-      path: "comment",
-      populate: {
-        path: "createdBy",
-        model: "User",
-        path: "reply",
-        model: "Comment",
-      },
-    });
+    const commentResponse = await
+      Comment
+        .findOne({ _id: commentSave._id })
+        .populate("createdBy")
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
-      post: _postResponse[0],
+      comment: commentResponse,
     });
   } catch (err) {
     return res.status(400).json({
@@ -282,7 +278,7 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
   }
 });
 
-router.post("/:postId/rep-comment/:id", requireSignin, async (req, res) => {
+router.post("/rep-comment/:id", requireSignin, async (req, res) => {
   try {
     const userId = req.user._id;
     const id = req.params.id;
@@ -301,19 +297,14 @@ router.post("/:postId/rep-comment/:id", requireSignin, async (req, res) => {
     const commentSave = await _newComment.save();
     _comment.reply.push(commentSave._id);
     await _comment.save();
-    const _postResponse = await Post.findOne({ _id: postId }).populate({
-      path: "comment",
-      populate: {
-        path: "createdBy",
-        model: "User",
-        path: "reply",
-        model: "Comment",
-      },
-    });
+    const commentResponse = await
+      Comment
+        .findOne({ _id: commentSave._id })
+        .populate("createdBy")
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
-      post: _postResponse,
+      comment: commentResponse,
     });
   } catch (err) {
     return res.status(400).json({
@@ -375,6 +366,69 @@ router.post("/like/:id", requireSignin, async (req, res) => {
       success: true,
       message: "Like post successfully.",
       post: _postResponse,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: "Your request could not be processed. Please try again.",
+      error
+    });
+  }
+});
+
+router.post("/like-comment/:id", requireSignin, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const id = req.params.id;
+    const query = {
+      _id: id,
+    };
+    const likeReq = req.body.like;
+
+    const _comment = await Comment.findOne(query);
+    if (!_comment)
+      return res.status(400).json({
+        success: false,
+        message: `You can't comment this comment.`,
+      });
+    const likedByCurrentUser = await Like.findOne({
+      _id: {
+        $in: _comment.liked
+      },
+      likedBy: userId,
+    })
+    if (likedByCurrentUser && likedByCurrentUser.type === likeReq.type) {
+      _comment.liked.splice(_comment.liked.indexOf(likedByCurrentUser.id), 1);
+      likedByCurrentUser.delete();
+    } else if (likedByCurrentUser && likedByCurrentUser.type !== likeReq.type) {
+      likedByCurrentUser.type === likeReq.type;
+      await likedByCurrentUser.update({ type: likeReq.type });
+    } else {
+      const _liked = new Like({ ...likeReq, likedBy: userId });
+      const likeSave = await _liked.save();
+      _comment.liked.push(likeSave._id);
+    }
+    await _comment.save();
+    const _commentResponse = await Comment.findOne(query).populate({
+      path: "comment",
+      populate: [{
+        path: "createdBy",
+        model: "User",
+
+      }, {
+        path: "reply",
+        model: "Comment",
+      }],
+    }).populate({
+      path: "liked",
+      populate: {
+        path: "createdBy",
+        model: "User",
+      },
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Like post successfully.",
+      post: _commentResponse,
     });
   } catch (error) {
     return res.status(400).json({
