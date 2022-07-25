@@ -34,4 +34,8 @@ const commentSchema = new mongoose.Schema({
   ],
 });
 
+commentSchema.pre('find', function () {
+  this.populate('createdBy reply liked')
+})
+
 module.exports = mongoose.model("Comment", commentSchema);

@@ -114,6 +114,7 @@ router.post('/login', validateSigninRequest, isRequestValidated, (req, res) => {
                                 firstName: user.firstName,
                                 lastName: user.lastName
                             },
+                            fullName: user.fullName,
                             gender: user.gender,
                         }
                     });

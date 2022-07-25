@@ -37,4 +37,18 @@ const postSchema = new mongoose.Schema({
   }]
 });
 
+postSchema.pre('find', function () {
+  this.populate([{
+    path: 'createBy',
+    select: {
+      avatar: 1,
+      fullName: 1
+    },
+  }, {
+    path: 'liked'
+  }, {
+    path: 'comment'
+  }])
+})
+
 module.exports = mongoose.model('Post', postSchema);

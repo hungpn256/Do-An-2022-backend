@@ -34,30 +34,25 @@ router.post("/create", requireSignin, async (req, res) => {
       });
     }
     let _user = await User.findById(user._id);
-    _user.password = null;
 
     return res.status(200).json({
       success: true,
       message: "Create post successfully.",
       post: {
         createBy: {
-          avatar: _user.avatar,
-          name: {
-            firstName: _user.firstName,
-            lastName: _user.lastName,
-          },
-          _id: _user._id,
-          phoneNumber: _user.phoneNumber,
-          gender: _user.gender,
-          role: _user.role,
+          avatar: post.createBy.avatar,
+          fullName: post.createBy.fullName,
+          _id: post.createBy._id,
         },
-        _id: _post._id,
-        images: _post.images,
-        liked: _post.liked,
-        text: _post.text,
-        createAt: _post.createAt,
-        updateAt: _post.updateAt,
-        action: _post.action,
+        _id: post._id,
+        images: post.images,
+        liked: post.liked,
+        text: post.text,
+        createAt: post.createAt,
+        updateAt: post.updateAt,
+        action: post.action,
+        numOfCmt: post.comment.length,
+        comment: post.comment.splice(-1, 1),
       },
     });
   });
@@ -134,21 +129,6 @@ router.get("/", async (req, res) => {
     .sort({ createAt: "desc" })
     .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
-    .populate("createBy")
-    .populate({
-      path: "comment",
-      populate: [{
-        path: "createdBy",
-        model: "User",
-      }, {
-        path: "reply",
-        model: "Comment",
-        populate: {
-          path: "createdBy",
-          model: "User",
-        }
-      }],
-    })
     .exec(async (err, posts) => {
       if (err) {
         return res.status(400).json({
@@ -160,14 +140,8 @@ router.get("/", async (req, res) => {
         return {
           createBy: {
             avatar: post.createBy.avatar,
-            name: {
-              firstName: post.createBy.firstName,
-              lastName: post.createBy.lastName,
-            },
+            fullName: post.createBy.fullName,
             _id: post.createBy._id,
-            phoneNumber: post.createBy.phoneNumber,
-            gender: post.createBy.gender,
-            role: post.createBy.role,
           },
           _id: post._id,
           images: post.images,
@@ -197,14 +171,6 @@ router.get("/:userId", async (req, res) => {
     .sort({ createAt: "desc" })
     .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
-    .populate("createBy")
-    .populate({
-      path: "comment",
-      populate: {
-        path: "createdBy",
-        model: "User",
-      },
-    })
     .exec(async (err, posts) => {
       if (err) {
         return res.status(400).json({
@@ -216,14 +182,8 @@ router.get("/:userId", async (req, res) => {
         return {
           createBy: {
             avatar: post.createBy.avatar,
-            name: {
-              firstName: post.createBy.firstName,
-              lastName: post.createBy.lastName,
-            },
+            fullName: post.createBy.fullName,
             _id: post.createBy._id,
-            phoneNumber: post.createBy.phoneNumber,
-            gender: post.createBy.gender,
-            role: post.createBy.role,
           },
           _id: post._id,
           images: post.images,
@@ -233,7 +193,7 @@ router.get("/:userId", async (req, res) => {
           updateAt: post.updateAt,
           action: post.action,
           numOfCmt: post.comment.length,
-          comment: post.comment.at(-1),
+          comment: post.comment.splice(-1, 1),
         };
       });
 
@@ -265,7 +225,7 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
     const commentResponse = await
       Comment
         .findOne({ _id: commentSave._id })
-        .populate("createdBy")
+        .populate("createdBy", "avatar fullName")
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
@@ -408,23 +368,7 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
       _comment.liked.push(likeSave._id);
     }
     await _comment.save();
-    const _commentResponse = await Comment.findOne(query).populate({
-      path: "comment",
-      populate: [{
-        path: "createdBy",
-        model: "User",
-
-      }, {
-        path: "reply",
-        model: "Comment",
-      }],
-    }).populate({
-      path: "liked",
-      populate: {
-        path: "createdBy",
-        model: "User",
-      },
-    });
+    const _commentResponse = await Comment.findOne(query)
     return res.status(200).json({
       success: true,
       message: "Like post successfully.",

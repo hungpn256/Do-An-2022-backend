@@ -100,10 +100,6 @@ router.put("/follow/:userId", requireSignin, async (req, res) => {
   });
 });
 
-router.get("/search?", async (req, res) => {
-  const name = req.query.name;
-});
-
 router.get("/:id", checkLogin, async (req, res) => {
   const id = req.params.id;
   const userId = req.user._id;
