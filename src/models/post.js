@@ -12,6 +12,10 @@ const postSchema = new mongoose.Schema({
   images: [
     {
       url: String,
+      typeMedia: {
+        type: String,
+        enum: ["IMAGE", "VIDEO"]
+      }
     },
   ],
   liked: [{
@@ -38,6 +42,20 @@ const postSchema = new mongoose.Schema({
 });
 
 postSchema.pre('find', function () {
+  this.populate([{
+    path: 'createBy',
+    select: {
+      avatar: 1,
+      fullName: 1
+    },
+  }, {
+    path: 'liked'
+  }, {
+    path: 'comment'
+  }])
+})
+
+postSchema.pre('findOne', function () {
   this.populate([{
     path: 'createBy',
     select: {

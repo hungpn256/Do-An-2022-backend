@@ -9,6 +9,10 @@ const commentSchema = new mongoose.Schema({
       url: {
         type: String,
       },
+      typeMedia: {
+        type: String,
+        enum: ["IMAGE", "VIDEO"]
+      }
     },
   ],
   liked: [

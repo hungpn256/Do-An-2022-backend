@@ -13,10 +13,12 @@ router.post("/create", requireSignin, async (req, res) => {
 
   const post = {
     text,
-    textAccent: text ? removeAccents(text).toLowerCase() : null,
+    textAccent: text ? removeAccents(text).toLowerCase() : '',
     createBy: user._id,
     images: images,
     action,
+    comment: [],
+    liked: []
   };
 
   const newPost = new Post(post);
@@ -33,27 +35,13 @@ router.post("/create", requireSignin, async (req, res) => {
         message: "You can't save post.",
       });
     }
-    let _user = await User.findById(user._id);
+
+    const newPost = await Post.findOne({ _id: _post._id })
 
     return res.status(200).json({
       success: true,
       message: "Create post successfully.",
-      post: {
-        createBy: {
-          avatar: post.createBy.avatar,
-          fullName: post.createBy.fullName,
-          _id: post.createBy._id,
-        },
-        _id: post._id,
-        images: post.images,
-        liked: post.liked,
-        text: post.text,
-        createAt: post.createAt,
-        updateAt: post.updateAt,
-        action: post.action,
-        numOfCmt: post.comment.length,
-        comment: post.comment.splice(-1, 1),
-      },
+      post: newPost,
     });
   });
 });
@@ -122,12 +110,17 @@ router.delete("/:id", requireSignin, async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const page = req.query.page || 1;
-  const limit = req.query.limit || 100;
+  const limit = req.query.limit || 10;
+  const _id = req.query._id
+  const query = { _id: { $lt: _id } }
+  if (!_id) {
+    delete query._id
+  }
 
-  await Post.find()
-    .sort({ createAt: "desc" })
-    .skip((Number(page) - 1) * +limit)
+  const count = await Post.count()
+
+  Post.find(query)
+    .sort({ createdAt: "desc" })
     .limit(Number(limit))
     .exec(async (err, posts) => {
       if (err) {
@@ -147,7 +140,7 @@ router.get("/", async (req, res) => {
           images: post.images,
           liked: post.liked,
           text: post.text,
-          createAt: post.createAt,
+          createdAt: post.createdAt,
           updateAt: post.updateAt,
           action: post.action,
           numOfCmt: post.comment.length,
@@ -158,6 +151,7 @@ router.get("/", async (req, res) => {
       return res.status(200).json({
         success: true,
         posts: _posts,
+        totalPost: count
       });
     });
 });
@@ -168,7 +162,7 @@ router.get("/:userId", async (req, res) => {
   const limit = req.query.limit || 10;
 
   await Post.find({ createBy: userId }, {})
-    .sort({ createAt: "desc" })
+    .sort({ createdAt: "desc" })
     .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
     .exec(async (err, posts) => {
@@ -189,7 +183,7 @@ router.get("/:userId", async (req, res) => {
           images: post.images,
           liked: post.liked,
           text: post.text,
-          createAt: post.createAt,
+          createdAt: post.createdAt,
           updateAt: post.updateAt,
           action: post.action,
           numOfCmt: post.comment.length,
