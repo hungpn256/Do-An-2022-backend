@@ -101,58 +101,33 @@ router.put("/follow/:userId", requireSignin, async (req, res) => {
 });
 
 router.get("/:id", checkLogin, async (req, res) => {
-  const id = req.params.id;
-  const userId = req.user._id;
-  let check = 3;
-  if (req.user !== 3) {
-    if (userId === id) {
-      check = 0;
-    } else {
-      const currentUser = await User.findById(userId).catch((err) =>
-        console.log(err)
-      );
-
-      if (currentUser.follow.includes(id)) {
-        check = 1;
-      } else {
-        check = 2;
-      }
+  try {
+    const id = req.params.id;
+    const userId = req.user._id;
+    const currentUser = await User.findById(userId)
+    const userTarget = await User.findOne({ _id: id })
+    if (!userTarget) {
+      res.status(400).json({
+        success: false,
+        error: "User not found",
+      });
     }
-  }
+    if (id !== userId) {
 
-  User.findById(id).exec((err, _user) => {
-    if (err)
-      return res.status(500).json({
-        success: false,
-        error: "Your request could not be processed. Please try again.",
-      });
-    if (!_user)
-      return res.status(401).json({
-        success: false,
-        message: "User doesn't exist.",
-      });
-    else {
+    } else {
       return res.status(200).json({
         success: true,
-        user: {
-          _id: _user._id,
-          email: _user.email,
-          phoneNumber: _user.phoneNumber,
-          name: {
-            firstName: _user.firstName,
-            lastName: _user.lastName,
-          },
-          location: _user.location,
-          relation: _user.relation,
-          avatar: _user.avatar,
-          cover: _user.cover,
-          gender: _user.gender,
-          role: _user.role,
-        },
-        isFollowed: check,
-      });
+        user: userTarget,
+        isFollowed: 0,
+      })
     }
-  });
+
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: "Your request could not be processed. Please try again.",
+    });
+  }
 });
 
 router.put("/profile", requireSignin, async (req, res) => {
@@ -186,7 +161,7 @@ router.put("/profile", requireSignin, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(400).json({
       success: false,
       error: "Your request could not be processed. Please try again.",
     });

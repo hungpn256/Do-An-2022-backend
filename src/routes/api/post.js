@@ -158,12 +158,20 @@ router.get("/", async (req, res) => {
 
 router.get("/:userId", async (req, res) => {
   const userId = req.params.userId;
-  const page = req.query.page || 1;
+  console.log("🚀 ~ file: post.js ~ line 161 ~ router.get ~ userId", userId)
   const limit = req.query.limit || 10;
+  const _id = req.query._id
+  console.log("🚀 ~ file: post.js ~ line 164 ~ router.get ~ _id", _id)
 
-  await Post.find({ createBy: userId }, {})
+  const query = { _id: { $lt: _id }, createBy: userId }
+  if (!_id) {
+    delete query._id
+  }
+
+  const count = await Post.count()
+
+  Post.find(query)
     .sort({ createdAt: "desc" })
-    .skip((Number(page) - 1) * +limit)
     .limit(Number(limit))
     .exec(async (err, posts) => {
       if (err) {
@@ -194,6 +202,7 @@ router.get("/:userId", async (req, res) => {
       return res.status(200).json({
         success: true,
         posts: _posts,
+        totalPost: count
       });
     });
 });
