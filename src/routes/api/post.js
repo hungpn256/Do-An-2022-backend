@@ -13,12 +13,12 @@ router.post("/create", requireSignin, async (req, res) => {
 
   const post = {
     text,
-    textAccent: text ? removeAccents(text).toLowerCase() : '',
+    textAccent: text ? removeAccents(text).toLowerCase() : "",
     createBy: user._id,
     images: images,
     action,
     comment: [],
-    liked: []
+    liked: [],
   };
 
   const newPost = new Post(post);
@@ -36,7 +36,7 @@ router.post("/create", requireSignin, async (req, res) => {
       });
     }
 
-    const newPost = await Post.findOne({ _id: _post._id })
+    const newPost = await Post.findOne({ _id: _post._id });
 
     return res.status(200).json({
       success: true,
@@ -111,13 +111,13 @@ router.delete("/:id", requireSignin, async (req, res) => {
 
 router.get("/", async (req, res) => {
   const limit = req.query.limit || 10;
-  const _id = req.query._id
-  const query = { _id: { $lt: _id } }
+  const _id = req.query._id;
+  const query = { _id: { $lt: _id } };
   if (!_id) {
-    delete query._id
+    delete query._id;
   }
 
-  const count = await Post.count()
+  const count = await Post.count();
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -151,24 +151,22 @@ router.get("/", async (req, res) => {
       return res.status(200).json({
         success: true,
         posts: _posts,
-        totalPost: count
+        totalPost: count,
       });
     });
 });
 
 router.get("/:userId", async (req, res) => {
   const userId = req.params.userId;
-  console.log("🚀 ~ file: post.js ~ line 161 ~ router.get ~ userId", userId)
   const limit = req.query.limit || 10;
-  const _id = req.query._id
-  console.log("🚀 ~ file: post.js ~ line 164 ~ router.get ~ _id", _id)
+  const _id = req.query._id;
 
-  const query = { _id: { $lt: _id }, createBy: userId }
+  const query = { _id: { $lt: _id }, createBy: userId };
   if (!_id) {
-    delete query._id
+    delete query._id;
   }
 
-  const count = await Post.count()
+  const count = await Post.count();
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -202,7 +200,7 @@ router.get("/:userId", async (req, res) => {
       return res.status(200).json({
         success: true,
         posts: _posts,
-        totalPost: count
+        totalPost: count,
       });
     });
 });
@@ -225,10 +223,9 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
     const commentSave = await _comment.save();
     _post[0].comment.push(commentSave._id);
     await _post[0].save();
-    const commentResponse = await
-      Comment
-        .findOne({ _id: commentSave._id })
-        .populate("createdBy", "avatar fullName")
+    const commentResponse = await Comment.findOne({
+      _id: commentSave._id,
+    }).populate("createdBy", "avatar fullName");
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
@@ -245,7 +242,7 @@ router.post("/rep-comment/:id", requireSignin, async (req, res) => {
   try {
     const userId = req.user._id;
     const id = req.params.id;
-    const postId = req.params.postId
+    const postId = req.params.postId;
     const query = {
       _id: id,
     };
@@ -260,10 +257,9 @@ router.post("/rep-comment/:id", requireSignin, async (req, res) => {
     const commentSave = await _newComment.save();
     _comment.reply.push(commentSave._id);
     await _comment.save();
-    const commentResponse = await
-      Comment
-        .findOne({ _id: commentSave._id })
-        .populate("createdBy")
+    const commentResponse = await Comment.findOne({
+      _id: commentSave._id,
+    }).populate("createdBy");
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
@@ -272,7 +268,7 @@ router.post("/rep-comment/:id", requireSignin, async (req, res) => {
   } catch (err) {
     return res.status(400).json({
       message: "Your request could not be processed. Please try again.",
-      error: err
+      error: err,
     });
   }
 });
@@ -294,10 +290,10 @@ router.post("/like/:id", requireSignin, async (req, res) => {
       });
     const likedByCurrentUser = await Like.findOne({
       _id: {
-        $in: _post.liked
+        $in: _post.liked,
       },
       likedBy: userId,
-    })
+    });
     if (likedByCurrentUser && likedByCurrentUser.type === likeReq.type) {
       _post.liked.splice(_post.liked.indexOf(likedByCurrentUser.id), 1);
       likedByCurrentUser.delete();
@@ -310,21 +306,23 @@ router.post("/like/:id", requireSignin, async (req, res) => {
       _post.liked.push(likeSave._id);
     }
     await _post.save();
-    const _postResponse = await Post.findOne(query).populate({
-      path: "comment",
-      populate: {
-        path: "createdBy",
-        model: "User",
-        path: "reply",
-        model: "Comment",
-      },
-    }).populate({
-      path: "liked",
-      populate: {
-        path: "createdBy",
-        model: "User",
-      },
-    });
+    const _postResponse = await Post.findOne(query)
+      .populate({
+        path: "comment",
+        populate: {
+          path: "createdBy",
+          model: "User",
+          path: "reply",
+          model: "Comment",
+        },
+      })
+      .populate({
+        path: "liked",
+        populate: {
+          path: "createdBy",
+          model: "User",
+        },
+      });
     return res.status(200).json({
       success: true,
       message: "Like post successfully.",
@@ -333,7 +331,7 @@ router.post("/like/:id", requireSignin, async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: "Your request could not be processed. Please try again.",
-      error
+      error,
     });
   }
 });
@@ -355,10 +353,10 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
       });
     const likedByCurrentUser = await Like.findOne({
       _id: {
-        $in: _comment.liked
+        $in: _comment.liked,
       },
       likedBy: userId,
-    })
+    });
     if (likedByCurrentUser && likedByCurrentUser.type === likeReq.type) {
       _comment.liked.splice(_comment.liked.indexOf(likedByCurrentUser.id), 1);
       likedByCurrentUser.delete();
@@ -371,7 +369,7 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
       _comment.liked.push(likeSave._id);
     }
     await _comment.save();
-    const _commentResponse = await Comment.findOne(query)
+    const _commentResponse = await Comment.findOne(query);
     return res.status(200).json({
       success: true,
       message: "Like post successfully.",
@@ -380,7 +378,7 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: "Your request could not be processed. Please try again.",
-      error
+      error,
     });
   }
 });
