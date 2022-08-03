@@ -164,3 +164,5 @@ router.get("/byStatus", requireSignin, async (req, res) => {
     });
   }
 });
+
+module.exports = router;
