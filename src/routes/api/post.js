@@ -5,7 +5,6 @@ const Comment = require("../../models/comment.js");
 const Like = require("../../models/like.js");
 
 const { requireSignin } = require("../../middleware/index.js");
-const { removeAccents } = require("../../helps/removeAccent.js");
 
 router.post("/create", requireSignin, async (req, res) => {
   const user = req.user;
@@ -13,7 +12,6 @@ router.post("/create", requireSignin, async (req, res) => {
 
   const post = {
     text,
-    textAccent: text ? removeAccents(text).toLowerCase() : "",
     createBy: user._id,
     images: images,
     action,
@@ -116,8 +114,7 @@ router.get("/", async (req, res) => {
   if (!_id) {
     delete query._id;
   }
-
-  const count = await Post.count();
+  const count = await Post.countDocuments()
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -165,8 +162,7 @@ router.get("/:userId", async (req, res) => {
   if (!_id) {
     delete query._id;
   }
-
-  const count = await Post.count();
+  const count = await Post.countDocuments()
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -382,5 +378,20 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
     });
   }
 });
+
+router.get('/comment/:idPost', requireSignin, async (req, res) => {
+  const { idPost } = req.params
+  const post = await Post.findOne({ _id: idPost })
+  console.log("🚀 ~ file: post.js ~ line 386 ~ router.get ~ post", post)
+  if (!post) {
+    return res.status(400).json({
+      message: "Post not found"
+    })
+  }
+  return res.status(200).json({
+    message: "Get comment successfully",
+    comment: post.comment
+  })
+})
 
 module.exports = router;

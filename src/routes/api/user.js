@@ -4,6 +4,7 @@ const { requireSignin, checkLogin } = require("../../middleware/index.js");
 
 const User = require("../../models/user.js");
 const keys = require("../../config/keys.js");
+const Friend = require("../../models/friend");
 
 router.get("/profile", requireSignin, async (req, res) => {
   const user = req.user;
@@ -68,60 +69,52 @@ router.get("/recomment", requireSignin, async (req, res) => {
   }
 });
 
-router.put("/follow/:userId", requireSignin, async (req, res) => {
-  const _id = req.user._id;
-  const _userId = req.params.userId;
-
-  await User.findById(_id).exec((err, user) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        error: "Your request could not be processed. Please try again.",
-      });
-    }
-    if (user.follow.length > 0 && user.follow.includes(_userId)) {
-      const filtered = user.follow.filter(function (value, index, arr) {
-        return value != _userId;
-      });
-      user.follow = filtered;
-      user.save();
-      return res.status(200).json({
-        success: true,
-        message: "Unfollow successfully.",
-      });
-    } else {
-      user.follow = [...user.follow, _userId];
-      user.save();
-      return res.status(200).json({
-        success: true,
-        message: "Follow successfully.",
-      });
-    }
-  });
-});
-
 router.get("/:id", checkLogin, async (req, res) => {
   try {
     const id = req.params.id;
-    const userId = req.user._id;
+    const userId = req.user?._id;
     const currentUser = await User.findById(userId)
     const userTarget = await User.findOne({ _id: id })
+
     if (!userTarget) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
         error: "User not found",
       });
     }
     if (id !== userId) {
-
-    } else {
+      let friendStatus;
+      if (currentUser.friend.includes(userTarget._id)) {
+        friendStatus = "FRIEND"
+      } else {
+        const reqFriend = await Friend.findOne({
+          requester: userId,
+          recipient: id,
+          status: "ADDFRIEND"
+        })
+        const addFriend = await Friend.findOne({
+          requester: id,
+          recipient: userId,
+          status: "ADDFRIEND"
+        })
+        if (reqFriend) {
+          friendStatus = "REQUESTED"
+        } else if (addFriend) {
+          friendStatus = "PENDING"
+        }
+      }
       return res.status(200).json({
         success: true,
         user: userTarget,
-        isFollowed: 0,
+        friendStatus,
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        user: currentUser,
+        friendStatus: "MINE"
       })
     }
-
   } catch (error) {
     res.status(400).json({
       success: false,
