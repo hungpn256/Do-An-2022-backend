@@ -13,8 +13,8 @@ const friendSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["ADDFRIEND", "PENDING", "ACCEPTED", "REJECTED"],
-    default: "ADDFRIEND",
+    enum: ["PENDING", "ACCEPTED", "REJECTED"],
+    default: "PENDING",
   },
 });
 

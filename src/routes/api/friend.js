@@ -135,27 +135,48 @@ router.get("/", requireSignin, async (req, res) => {
 router.get("/byStatus", requireSignin, async (req, res) => {
   try {
     const _id = req.user._id;
-    const user = await Friend.findById(_id).populate({
-      path: "friend",
-      model: "User",
-      select: {
-        _id: 1,
-        avatar: 1,
-        fullName: 1,
-      },
-    });
-    if (user) {
+    const status = req.params.status;
+    if (status === "REQUESTED") {
+      const friends = await Friend.find({
+        requester: _id,
+        status: "PENDING",
+      }).populate({
+        path: "recipient",
+        model: "User",
+        select: {
+          _id: 1,
+          avatar: 1,
+          fullName: 1,
+        },
+      });
       return res.status(200).json({
         success: true,
-        friend: user.friend,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "User not found.",
-        error,
+        friends,
       });
     }
+    if (status === "PENDING") {
+      const friends = await Friend.find({
+        recipient: _id,
+        status: "PENDING",
+      }).populate({
+        path: "requester",
+        model: "User",
+        select: {
+          _id: 1,
+          avatar: 1,
+          fullName: 1,
+        },
+      });
+      return res.status(200).json({
+        success: true,
+        friends,
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: "User not found.",
+      error,
+    });
   } catch (error) {
     return res.status(400).json({
       success: false,

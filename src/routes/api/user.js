@@ -41,40 +41,12 @@ router.get("/profile", requireSignin, async (req, res) => {
   });
 });
 
-router.get("/recomment", requireSignin, async (req, res) => {
-  const userId = req.user._id;
-
-  try {
-    const currentUser = await User.findById(userId);
-    const userFollow = currentUser.follow;
-    let suggestedUsers = await User.find({
-      $and: [{ _id: { $ne: userId } }, { _id: { $nin: userFollow } }],
-    }).limit(5);
-    suggestedUsers = suggestedUsers.map((v) => {
-      return {
-        _id: v._id,
-        name: {
-          firstName: v.firstName,
-          lastName: v.lastName,
-        },
-        avatar: v.avatar,
-      };
-    });
-    return res.status(200).json(suggestedUsers);
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      error: "Your request could not be processed. Please try again.",
-    });
-  }
-});
-
 router.get("/:id", checkLogin, async (req, res) => {
   try {
     const id = req.params.id;
     const userId = req.user?._id;
-    const currentUser = await User.findById(userId)
-    const userTarget = await User.findOne({ _id: id })
+    const currentUser = await User.findById(userId);
+    const userTarget = await User.findOne({ _id: id });
 
     if (!userTarget) {
       return res.status(400).json({
@@ -85,22 +57,22 @@ router.get("/:id", checkLogin, async (req, res) => {
     if (id !== userId) {
       let friendStatus;
       if (currentUser.friend.includes(userTarget._id)) {
-        friendStatus = "FRIEND"
+        friendStatus = "FRIEND";
       } else {
         const reqFriend = await Friend.findOne({
           requester: userId,
           recipient: id,
-          status: "ADDFRIEND"
-        })
+          status: "PENDING",
+        });
         const addFriend = await Friend.findOne({
           requester: id,
           recipient: userId,
-          status: "ADDFRIEND"
-        })
+          status: "PENDING",
+        });
         if (reqFriend) {
-          friendStatus = "REQUESTED"
+          friendStatus = "REQUESTED";
         } else if (addFriend) {
-          friendStatus = "PENDING"
+          friendStatus = "PENDING";
         }
       }
       return res.status(200).json({
@@ -112,8 +84,8 @@ router.get("/:id", checkLogin, async (req, res) => {
       return res.status(200).json({
         success: true,
         user: currentUser,
-        friendStatus: "MINE"
-      })
+        friendStatus: "MINE",
+      });
     }
   } catch (error) {
     res.status(400).json({
