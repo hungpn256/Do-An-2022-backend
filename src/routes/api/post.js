@@ -114,7 +114,7 @@ router.get("/", async (req, res) => {
   if (!_id) {
     delete query._id;
   }
-  const count = await Post.countDocuments()
+  const count = await Post.countDocuments();
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -162,7 +162,7 @@ router.get("/:userId", async (req, res) => {
   if (!_id) {
     delete query._id;
   }
-  const count = await Post.countDocuments()
+  const count = await Post.countDocuments();
 
   Post.find(query)
     .sort({ createdAt: "desc" })
@@ -379,19 +379,18 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
   }
 });
 
-router.get('/comment/:idPost', requireSignin, async (req, res) => {
-  const { idPost } = req.params
-  const post = await Post.findOne({ _id: idPost })
-  console.log("🚀 ~ file: post.js ~ line 386 ~ router.get ~ post", post)
+router.get("/comment/:idPost", requireSignin, async (req, res) => {
+  const { idPost } = req.params;
+  const post = await Post.findOne({ _id: idPost });
   if (!post) {
     return res.status(400).json({
-      message: "Post not found"
-    })
+      message: "Post not found",
+    });
   }
   return res.status(200).json({
     message: "Get comment successfully",
-    comment: post.comment
-  })
-})
+    comment: post.comment,
+  });
+});
 
 module.exports = router;
