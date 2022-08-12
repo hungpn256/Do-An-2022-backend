@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // User Schema
 const userSchema = new mongoose.Schema({
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
-    enum: ['MALE', 'FEMALE', 'OTHER'],
+    enum: ["MALE", "FEMALE", "OTHER"],
     require: true,
   },
   avatar: String,
@@ -36,13 +36,13 @@ const userSchema = new mongoose.Schema({
   friend: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    }
-  ]
+      ref: "User",
+    },
+  ],
 });
 
-userSchema.virtual('name').set(function () {
-  return `${this.firstName} ${this.lastName}`
+userSchema.virtual("name").set(function () {
+  return `${this.firstName} ${this.lastName}`;
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);

@@ -8,7 +8,7 @@ const Friend = require("../../models/friend");
 
 router.get("/profile", requireSignin, async (req, res) => {
   const user = req.user;
-  User.findById(user._id).exec((err, _user) => {
+  User.findOne({ _id: user._id }).exec((err, _user) => {
     if (err)
       return res.status(500).json({
         success: false,

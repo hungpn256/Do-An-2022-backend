@@ -12,11 +12,12 @@ router.post("/:idUser", requireSignin, async (req, res) => {
         { requester: _id, recipient: _idTarget },
         { requester: _idTarget, recipient: _id },
       ],
+      status: "PENDING",
     });
     if (checkExist) {
       return res.status(400).json({
         success: false,
-        message: "Your request could not be processed. Please try again.",
+        message: "exist",
       });
     }
     const _newFriend = new Friend({ requester: _id, recipient: _idTarget });
@@ -70,14 +71,34 @@ router.put("/:idUser", requireSignin, async (req, res) => {
     if (checkExist) {
       checkExist.status = status;
       await checkExist.save();
+      const user1 = await User.findOne({ _id });
+      const user2 = await User.findOne({ _id: _idTarget });
       if (status === "ACCEPTED") {
-        const user1 = await User.findOne({ _id });
         user1.friend.push(_idTarget);
         user1.save();
-        const user2 = await User.findOne({ _id: _idTarget });
         user2.friend.push(_id);
         user2.save();
       } else if (status === "REJECTED") {
+        if (user1.friend.includes(user2._id)) {
+          await User.updateOne(
+            { _id },
+            {
+              $pull: {
+                friend: _idTarget,
+              },
+            }
+          );
+        }
+        if (user2.friend.includes(user1._id)) {
+          await User.updateOne(
+            { _id: _idTarget },
+            {
+              $pull: {
+                friend: _id,
+              },
+            }
+          );
+        }
         checkExist.remove();
       }
       return res.status(200).json({
@@ -99,43 +120,11 @@ router.put("/:idUser", requireSignin, async (req, res) => {
   }
 });
 
-router.get("/", requireSignin, async (req, res) => {
-  try {
-    const _id = req.user._id;
-    const user = await User.findById(_id).populate({
-      path: "friend",
-      model: "User",
-      select: {
-        _id: 1,
-        avatar: 1,
-        fullName: 1,
-      },
-    });
-    if (user) {
-      return res.status(200).json({
-        success: true,
-        friend: user.friend,
-      });
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: "User not found.",
-        error,
-      });
-    }
-  } catch (error) {
-    return res.status(400).json({
-      success: false,
-      message: "Your request could not be processed. Please try again.",
-      error,
-    });
-  }
-});
-
 router.get("/byStatus", requireSignin, async (req, res) => {
   try {
+    console.log(123);
     const _id = req.user._id;
-    const status = req.params.status;
+    const status = req.query.status;
     if (status === "REQUESTED") {
       const friends = await Friend.find({
         requester: _id,
@@ -143,15 +132,10 @@ router.get("/byStatus", requireSignin, async (req, res) => {
       }).populate({
         path: "recipient",
         model: "User",
-        select: {
-          _id: 1,
-          avatar: 1,
-          fullName: 1,
-        },
       });
       return res.status(200).json({
         success: true,
-        friends,
+        friends: friends,
       });
     }
     if (status === "PENDING") {
@@ -161,15 +145,10 @@ router.get("/byStatus", requireSignin, async (req, res) => {
       }).populate({
         path: "requester",
         model: "User",
-        select: {
-          _id: 1,
-          avatar: 1,
-          fullName: 1,
-        },
       });
       return res.status(200).json({
         success: true,
-        friends,
+        friends: friends,
       });
     }
     return res.status(400).json({
@@ -177,6 +156,36 @@ router.get("/byStatus", requireSignin, async (req, res) => {
       message: "User not found.",
       error,
     });
+  } catch (error) {
+    console.log("🚀 ~ file: friend.js ~ line 167 ~ router.get ~ error", error);
+    return res.status(400).json({
+      success: false,
+      message: "Your request could not be processed. Please try again.",
+      error,
+    });
+  }
+});
+
+router.get("/:_id", requireSignin, async (req, res) => {
+  try {
+    const _id = req.params._id;
+    const user = await User.findById(_id).populate({
+      path: "friend",
+      model: "User",
+    });
+    console.log("🚀 ~ file: friend.js ~ line 180 ~ user ~ user", user.friend);
+    if (user) {
+      return res.status(200).json({
+        success: true,
+        friends: user.friend,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "User not found.",
+        error,
+      });
+    }
   } catch (error) {
     return res.status(400).json({
       success: false,
