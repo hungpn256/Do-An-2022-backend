@@ -1,11 +1,10 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 // Post Schema
 const postSchema = new mongoose.Schema({
   text: {
     type: String,
   },
-  textAccent: String,
   action: {
     type: String,
   },
@@ -14,17 +13,19 @@ const postSchema = new mongoose.Schema({
       url: String,
       typeMedia: {
         type: String,
-        enum: ["IMAGE", "VIDEO"]
-      }
+        enum: ["IMAGE", "VIDEO"],
+      },
     },
   ],
-  liked: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Like',
-  }],
+  liked: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Like",
+    },
+  ],
   createBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    ref: "User",
     required: true,
   },
   createdAt: {
@@ -35,38 +36,48 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  comment: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Comment',
-  }]
+  comment: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Comment",
+    },
+  ],
 });
 
-postSchema.pre('find', function () {
-  this.populate([{
-    path: 'createBy',
-    select: {
-      avatar: 1,
-      fullName: 1
+postSchema.pre("find", function () {
+  this.populate([
+    {
+      path: "createBy",
+      select: {
+        avatar: 1,
+        fullName: 1,
+      },
     },
-  }, {
-    path: 'liked'
-  }, {
-    path: 'comment'
-  }])
-})
-
-postSchema.pre('findOne', function () {
-  this.populate([{
-    path: 'createBy',
-    select: {
-      avatar: 1,
-      fullName: 1
+    {
+      path: "liked",
     },
-  }, {
-    path: 'liked'
-  }, {
-    path: 'comment'
-  }])
-})
+    {
+      path: "comment",
+    },
+  ]);
+});
 
-module.exports = mongoose.model('Post', postSchema);
+postSchema.pre("findOne", function () {
+  this.populate([
+    {
+      path: "createBy",
+      select: {
+        avatar: 1,
+        fullName: 1,
+      },
+    },
+    {
+      path: "liked",
+    },
+    {
+      path: "comment",
+    },
+  ]);
+});
+
+module.exports = mongoose.model("Post", postSchema);
