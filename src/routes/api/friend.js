@@ -75,9 +75,9 @@ router.put("/:idUser", requireSignin, async (req, res) => {
       const user2 = await User.findOne({ _id: _idTarget });
       if (status === "ACCEPTED") {
         user1.friend.push(_idTarget);
-        user1.save();
+        await user1.save();
         user2.friend.push(_id);
-        user2.save();
+        await user2.save();
       } else if (status === "REJECTED") {
         if (user1.friend.includes(user2._id)) {
           await User.updateOne(
@@ -108,7 +108,6 @@ router.put("/:idUser", requireSignin, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Could not find friend",
-        error,
       });
     }
   } catch (error) {
@@ -173,7 +172,6 @@ router.get("/:_id", requireSignin, async (req, res) => {
       path: "friend",
       model: "User",
     });
-    console.log("🚀 ~ file: friend.js ~ line 180 ~ user ~ user", user.friend);
     if (user) {
       return res.status(200).json({
         success: true,
