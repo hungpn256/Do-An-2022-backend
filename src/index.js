@@ -52,7 +52,10 @@ app.use("/api/v1", routes);
 //   next();
 // });
 
+const connections = [];
+
 io.on("connection", (socket) => {
+  socket.broadcast.emit("friend-online", "online");
   console.log("a user connected", socket);
   socket.on("disconnect", function () {
     console.log("disconect");
