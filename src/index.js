@@ -41,8 +41,23 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", routes);
 
+// io.use((socket) => {
+//   if (socket.handshake.auth.token) {
+//     const token = socket.handshake.auth.token.split(" ")[1];
+//     const user = jwt.verify(token, keys.jwt.secret);
+//     req.user = user;
+//   } else {
+//     return res.status(401).json({ message: "Authorization required" });
+//   }
+//   next();
+// });
+
 io.on("connection", (socket) => {
-  console.log("a user connected");
+  console.log("a user connected", socket);
+  socket.on("disconnect", function () {
+    console.log("disconect");
+    console.log(socket);
+  });
 });
 
 server.listen(port, () => {
