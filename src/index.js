@@ -14,6 +14,7 @@ const http = require("http");
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const jwt = require("jsonwebtoken");
 
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -41,20 +42,19 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", routes);
 
-// io.use((socket) => {
-//   if (socket.handshake.auth.token) {
-//     const token = socket.handshake.auth.token.split(" ")[1];
-//     const user = jwt.verify(token, keys.jwt.secret);
-//     req.user = user;
-//   } else {
-//     return res.status(401).json({ message: "Authorization required" });
-//   }
-//   next();
-// });
+io.use((socket) => {
+  if (socket.handshake.auth.token) {
+    const token = socket.handshake.auth.token.split(" ")[1];
+    const user = jwt.verify(token, keys.jwt.secret);
+    socket.user = user;
+    next();
+  }
+});
 
 const connections = [];
 
 io.on("connection", (socket) => {
+  console.log("🚀 ~ file: index.js ~ line 67 ~ io.on ~ socket", socket.user);
   socket.broadcast.emit("friend-online", "online");
   console.log("a user connected", socket);
   socket.on("disconnect", function () {
