@@ -171,6 +171,11 @@ router.get("/:_id", requireSignin, async (req, res) => {
     const user = await User.findById(_id).populate({
       path: "friend",
       model: "User",
+      options: {
+        sort: {
+          lastLogin: -1,
+        },
+      },
     });
     if (user) {
       return res.status(200).json({

@@ -15,6 +15,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 const jwt = require("jsonwebtoken");
+const User = require("./models/user");
+const SocketModel = require("./models/socket");
 
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -42,7 +44,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1", routes);
 
-io.use((socket) => {
+io.use((socket, next) => {
   if (socket.handshake.auth.token) {
     const token = socket.handshake.auth.token.split(" ")[1];
     const user = jwt.verify(token, keys.jwt.secret);
@@ -51,15 +53,43 @@ io.use((socket) => {
   }
 });
 
-const connections = [];
+let connections = [];
 
-io.on("connection", (socket) => {
-  console.log("🚀 ~ file: index.js ~ line 67 ~ io.on ~ socket", socket.user);
-  socket.broadcast.emit("friend-online", "online");
-  console.log("a user connected", socket);
-  socket.on("disconnect", function () {
+io.on("connection", async (socket) => {
+  const { user } = socket;
+  const newSocket = {
+    socket: socket.id,
+    user: user._id,
+  };
+  await new SocketModel(newSocket).save();
+  await User.findOneAndUpdate(
+    { _id: user._id },
+    { status: "ONLINE", lastLogin: new Date() }
+  );
+  const userCurrent = await User.findOne({ _id: user._id });
+  const listSocketFriend = await SocketModel.find({
+    user: {
+      $in: userCurrent.friend,
+    },
+  });
+  listSocketFriend.forEach((item) => {
+    socket.to(item.socket).emit("friend-status-change", item.user);
+  });
+
+  socket.on("disconnect", async () => {
     console.log("disconect");
-    console.log(socket);
+    await User.findOneAndUpdate({ _id: user._id }, { status: "OFFLINE" });
+    await SocketModel.findOneAndDelete({ socket: socket.id });
+    connections = connections.filter((item) => item.socketId !== socket.id);
+    const userCurrent = await User.findOne({ _id: user._id });
+    const listSocketFriend = await SocketModel.find({
+      user: {
+        $in: userCurrent.friend,
+      },
+    });
+    listSocketFriend.forEach((item) => {
+      socket.to(item.socket).emit("friend-status-change", item.user);
+    });
   });
 });
 

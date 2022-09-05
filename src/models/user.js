@@ -39,6 +39,13 @@ const userSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  status: {
+    type: String,
+    enum: ["ONLINE", "OFFLINE"],
+  },
+  lastLogin: {
+    type: Date,
+  },
 });
 
 userSchema.virtual("name").set(function () {
