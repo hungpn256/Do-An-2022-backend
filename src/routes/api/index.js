@@ -4,6 +4,7 @@ const authRoutes = require("./auth.js");
 const userRoutes = require("./user.js");
 const postRoutes = require("./post.js");
 const friendRoutes = require("./friend");
+const conversationRoutes = require("./conversation");
 const { queryVarUser, queryVarPost } = require("../../services/query.js");
 const User = require("../../models/user.js");
 const Post = require("../../models/post.js");
@@ -21,14 +22,17 @@ router.use("/post", postRoutes);
 //friend routes
 router.use("/friend", friendRoutes);
 
+//conversation routes
+router.use("/conversation", conversationRoutes);
+
 router.get("/search", async (req, res) => {
   let q = req.query.q;
   let result = {};
   const qUser = queryVarUser(removeAccents(q));
-  const users = await User.find(qUser)
+  const users = await User.find(qUser);
   result.users = users;
   const qPost = queryVarPost(removeAccents(q));
-  const posts = await Post.find(qPost)
+  const posts = await Post.find(qPost);
   result.articles = posts;
   return res.status(200).json({
     result,
