@@ -8,6 +8,7 @@ const conversationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: ["GROUP", "PRIVATE"],
+    default: "PRIVATE",
   },
   host: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,6 +23,12 @@ const conversationSchema = new mongoose.Schema({
       nickName: {
         type: String,
         default: null,
+      },
+      lastSeen: {
+        type: Date,
+      },
+      lastDelete: {
+        type: Date,
       },
     },
   ],

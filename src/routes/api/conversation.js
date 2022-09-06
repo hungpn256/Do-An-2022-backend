@@ -13,51 +13,41 @@ router.post("/", requireSignin, async (req, res) => {
     const { _id } = user;
     const { targetIds } = req.body;
     const target = [
-      { user: _id },
+      { "participants.user": _id },
       ...targetIds.map((i) => {
-        return { user: i };
+        return { "participants.user": i };
       }),
     ];
 
     const conversations = await Conversation.find({
-      participants: {
-        $elemMatch: {
-          user: {
-            $in: [_id, ...targetIds],
-          },
-        },
-      },
+      $and: [...target, { type: "PRIVATE" }],
     });
-    console.log(
-      "🚀 ~ file: conversation.js ~ line 19 ~ router.post ~ conversations",
-      conversations
-    );
 
-    // if (conversations) {
-    //   return res.status(200).json({
-    //     success: true,
-    //     message: "Get conversation successfully",
-    //     conversation: conversationSave,
-    //   });
-    // } else {
-    //   const newConversation = new Conversation({
-    //     host: _id,
-    //     participants: [
-    //       { user: _id },
-    //       ...targetIds.map((i) => {
-    //         return { user: i };
-    //       }),
-    //     ],
-    //   });
+    if (conversations.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: "Get conversation successfully",
+        conversation: conversations[0],
+      });
+    } else {
+      const newConversation = new Conversation({
+        host: _id,
+        participants: [
+          { user: _id },
+          ...targetIds.map((i) => {
+            return { user: i };
+          }),
+        ],
+      });
 
-    //   const conversationSave = await newConversation.save();
+      const conversationSave = await newConversation.save();
 
-    //   return res.status(200).json({
-    //     success: true,
-    //     message: "Get conversation successfully",
-    //     conversation: conversationSave,
-    //   });
-    // }
+      return res.status(200).json({
+        success: true,
+        message: "Get conversation successfully",
+        conversation: conversationSave,
+      });
+    }
   } catch (e) {
     console.log(e);
     return res.status(400).json({
