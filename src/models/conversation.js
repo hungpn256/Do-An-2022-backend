@@ -45,4 +45,14 @@ const conversationSchema = new mongoose.Schema({
   },
 });
 
+conversationSchema.set("toObject", { virtuals: true });
+conversationSchema.set("toJSON", { virtuals: true });
+
+conversationSchema.virtual("messages", {
+  ref: "Message",
+  localField: "_id",
+  foreignField: "conversation",
+  count: true,
+});
+
 module.exports = mongoose.model("Conversation", conversationSchema);

@@ -76,8 +76,12 @@ router.get("/", requireSignin, async (req, res) => {
 
     const conversations = await Conversation.find(query)
       .sort({ updatedAt: 1 })
-      .limit(limit);
-
+      .limit(limit)
+      .populate("messages");
+    console.log(
+      "🚀 ~ file: conversation.js ~ line 78 ~ router.get ~ conversations",
+      conversations
+    );
     return res.status(200).json({
       success: true,
       conversations: conversations,
@@ -86,7 +90,7 @@ router.get("/", requireSignin, async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Some thing went wrong",
-      error: e,
+      error: e.message,
     });
   }
 });
