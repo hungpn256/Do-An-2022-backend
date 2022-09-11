@@ -77,11 +77,15 @@ router.get("/", requireSignin, async (req, res) => {
     const conversations = await Conversation.find(query)
       .sort({ updatedAt: 1 })
       .limit(limit)
-      .populate("messages");
-    console.log(
-      "🚀 ~ file: conversation.js ~ line 78 ~ router.get ~ conversations",
-      conversations
-    );
+      .populate("messages")
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      });
     return res.status(200).json({
       success: true,
       conversations: conversations,
