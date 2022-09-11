@@ -77,6 +77,7 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", async () => {
+    console.log("disconnect");
     await SocketModel.findOneAndDelete({ socket: socket.id });
     const checkSokerExist = await SocketModel.findOne({ user: user._id });
     if (!checkSokerExist) {
