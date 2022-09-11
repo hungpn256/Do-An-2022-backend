@@ -53,7 +53,7 @@ io.use((socket, next) => {
   }
 });
 
-let connections = [];
+app.set("socketio", io)
 
 io.on("connection", async (socket) => {
   const { user } = socket;
@@ -77,10 +77,11 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("disconnect", async () => {
-    console.log("disconect");
-    await User.findOneAndUpdate({ _id: user._id }, { status: "OFFLINE" });
     await SocketModel.findOneAndDelete({ socket: socket.id });
-    connections = connections.filter((item) => item.socketId !== socket.id);
+    const checkSokerExist = await SocketModel.findOne({ user: user._id });
+    if (!checkSokerExist) {
+      await User.findOneAndUpdate({ _id: user._id }, { status: "OFFLINE" });
+    }
     const userCurrent = await User.findOne({ _id: user._id });
     const listSocketFriend = await SocketModel.find({
       user: {
