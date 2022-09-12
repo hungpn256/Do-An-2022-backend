@@ -88,9 +88,15 @@ router.get("/", requireSignin, async (req, res) => {
     }
 
     const conversations = await Conversation.find(query)
-      .sort({ updatedAt: 1 })
       .limit(limit)
-      .populate("messages")
+      .sort({ updatedAt: 1 })
+      .populate({
+        path: "messages",
+        options: {
+          sort: { createdAt: -1 },
+          limit: 1,
+        },
+      })
       .populate({
         path: "participants.user",
         select: {
@@ -98,7 +104,16 @@ router.get("/", requireSignin, async (req, res) => {
           fullName: 1,
           status: 1,
         },
+      })
+      .populate({
+        path: "numberOfMessages",
+        match: {
+          $getField: {
+            $gt: 1,
+          },
+        },
       });
+
     return res.status(200).json({
       success: true,
       conversations: conversations,

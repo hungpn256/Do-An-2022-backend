@@ -25,13 +25,10 @@ app.use(cors());
 app.use(passport.initialize());
 app.use("/public", express.static(path.join(__dirname, "uploads")));
 // Connect to MongoDB
-mongoose.set("useCreateIndex", true);
 mongoose
   .connect(database.url, {
-    useCreateIndex: true,
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useFindAndModify: false,
   })
   .then(() =>
     console.log(`${chalk.green("✓")} ${chalk.blue("MongoDB Connected!")}`)
@@ -53,7 +50,7 @@ io.use((socket, next) => {
   }
 });
 
-app.set("socketio", io)
+app.set("socketio", io);
 
 io.on("connection", async (socket) => {
   const { user } = socket;
