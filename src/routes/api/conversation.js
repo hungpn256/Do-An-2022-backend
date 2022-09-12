@@ -77,7 +77,6 @@ router.get("/", requireSignin, async (req, res) => {
     const limit = req.query.limit || 10;
     const lastConversationId = req.query.lastConversationId;
     const textSearch = req.query.textSearch;
-    console.log("🚀 ~ file: conversation.js ~ line 79 ~ router.get ~ lastConversationId", lastConversationId)
     const user = req.user;
     const { _id } = user;
     const query = {
@@ -89,7 +88,8 @@ router.get("/", requireSignin, async (req, res) => {
       delete query._id;
     }
 
-    const total = await Conversation.find(query).countDocuments()
+    const total = await Conversation.find({ "participants.user": _id, }).countDocuments()
+    console.log("🚀 ~ file: conversation.js ~ line 92 ~ router.get ~ total", total)
 
     const conversations = await Conversation.find(query)
       .limit(limit)
@@ -99,6 +99,14 @@ router.get("/", requireSignin, async (req, res) => {
         options: {
           sort: { createdAt: -1 },
           limit: 1,
+          populate: {
+            path: "createdBy",
+            select: {
+              avatar: 1,
+              fullName: 1,
+              status: 1,
+            },
+          }
         },
       })
       .populate({
@@ -127,7 +135,7 @@ router.get("/", requireSignin, async (req, res) => {
   }
 });
 
-router.get("/message/:conversationId", requireSignin, async (req, res) => {
+router.get("/:conversationId/message", requireSignin, async (req, res) => {
   try {
     const limit = req.query.limit || 10;
     const lastMessageId = req.query.lastMessageId;
@@ -140,13 +148,23 @@ router.get("/message/:conversationId", requireSignin, async (req, res) => {
       delete query._id;
     }
 
+    const total = await Message.find(query).countDocuments()
+
     const messages = await Message.find(query)
       .sort({ createdAt: 1 })
-      .limit(limit);
+      .limit(limit)
+      .populate({
+        path: "createdBy", select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        }
+      });
 
     return res.status(200).json({
       success: true,
       messages: messages,
+      total,
     });
   } catch (e) {
     return res.status(400).json({
@@ -160,13 +178,23 @@ router.get("/message/:conversationId", requireSignin, async (req, res) => {
 router.post("/message", requireSignin, async (req, res) => {
   try {
     const message = req.body.message;
+    const conversationId = req.body.conversationId;
+    console.log("🚀 ~ file: conversation.js ~ line 181 ~ router.post ~ conversationId", conversationId)
+    await Conversation.findByIdAndUpdate(conversationId, { updatedAt: Date.now() })
     message.createdBy = req.user._id;
 
     const newMessages = new Message(message);
     const messageSave = await newMessages.save();
+    const messageResp = await Message.populate(messageSave, {
+      path: 'createdBy', select: {
+        avatar: 1,
+        fullName: 1,
+        status: 1,
+      }
+    })
     return res.status(200).json({
       success: true,
-      message: messageSave,
+      message: messageResp,
     });
   } catch (e) {
     return res.status(400).json({
