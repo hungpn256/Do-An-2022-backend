@@ -22,6 +22,13 @@ router.post("/", requireSignin, async (req, res) => {
 
     const conversations = await Conversation.find({
       $and: [...target, { type: "PRIVATE" }],
+    }).populate({
+      path: "participants.user",
+      select: {
+        avatar: 1,
+        fullName: 1,
+        status: 1,
+      },
     });
 
     if (conversations.length > 0) {
@@ -41,8 +48,14 @@ router.post("/", requireSignin, async (req, res) => {
         ],
       });
 
-      const conversationSave = await newConversation.save();
-
+      const conversationSave = await newConversation.save().populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      });
       return res.status(200).json({
         success: true,
         message: "Get conversation successfully",
