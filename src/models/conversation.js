@@ -44,8 +44,7 @@ const conversationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",
     },
-  },
-  { strict: false }
+  }
 );
 
 conversationSchema.set("toObject", { virtuals: true });

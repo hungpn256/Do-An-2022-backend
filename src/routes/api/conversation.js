@@ -76,16 +76,20 @@ router.get("/", requireSignin, async (req, res) => {
   try {
     const limit = req.query.limit || 10;
     const lastConversationId = req.query.lastConversationId;
+    const textSearch = req.query.textSearch;
+    console.log("🚀 ~ file: conversation.js ~ line 79 ~ router.get ~ lastConversationId", lastConversationId)
     const user = req.user;
     const { _id } = user;
     const query = {
-      _id: { $lt: lastConversationId },
+      _id: { $gt: lastConversationId },
       "participants.user": _id,
     };
 
     if (!lastConversationId) {
       delete query._id;
     }
+
+    const total = await Conversation.find(query).countDocuments()
 
     const conversations = await Conversation.find(query)
       .limit(limit)
@@ -106,17 +110,13 @@ router.get("/", requireSignin, async (req, res) => {
         },
       })
       .populate({
-        path: "numberOfMessages",
-        match: {
-          $getField: {
-            $gt: 1,
-          },
-        },
+        path: "numberOfMessages"
       });
 
     return res.status(200).json({
       success: true,
       conversations: conversations,
+      total,
     });
   } catch (e) {
     return res.status(400).json({
