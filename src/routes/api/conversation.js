@@ -63,18 +63,38 @@ router.post("/", requireSignin, async (req, res) => {
         ],
       });
 
-      const conversationSave = await newConversation.save().populate({
-        path: "participants.user",
-        select: {
-          avatar: 1,
-          fullName: 1,
-          status: 1,
+
+      const conversationSave = await newConversation.save();
+      const conversationPopulate = Conversation.populate(conversationSave).populate({
+        path: "messages",
+        options: {
+          sort: { _id: -1 },
+          // limit: 1,
+          populate: {
+            path: "createdBy",
+            select: {
+              _id: 1,
+              avatar: 1,
+              fullName: 1,
+            },
+          }
         },
-      });
+      })
+        .populate({
+          path: "participants.user",
+          select: {
+            _id: 1,
+            avatar: 1,
+            fullName: 1,
+          },
+        })
+        .populate({
+          path: "numberOfMessages"
+        });
       return res.status(200).json({
         success: true,
         message: "Get conversation successfully",
-        conversation: conversationSave,
+        conversation: conversationPopulate,
       });
     }
   } catch (e) {
