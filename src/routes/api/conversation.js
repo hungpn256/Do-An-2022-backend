@@ -5,6 +5,7 @@ const Comment = require("../../models/comment.js");
 const Like = require("../../models/like.js");
 const Conversation = require("../../models/conversation");
 const Message = require("../../models/message");
+const SocketModel = require("../../models/socket");
 
 const { requireSignin } = require("../../middleware/index.js");
 const mongoose = require("mongoose");
@@ -28,6 +29,20 @@ router.post("/", requireSignin, async (req, res) => {
         avatar: 1,
         fullName: 1,
         status: 1,
+      },
+    }).populate({
+      path: "messages",
+      options: {
+        sort: { createdAt: -1 },
+        limit: 1,
+        populate: {
+          path: "createdBy",
+          select: {
+            avatar: 1,
+            fullName: 1,
+            status: 1,
+          },
+        }
       },
     });
 
@@ -75,36 +90,39 @@ router.post("/", requireSignin, async (req, res) => {
 router.get("/", requireSignin, async (req, res) => {
   try {
     const limit = req.query.limit || 10;
-    const lastConversationId = req.query.lastConversationId;
+    const lastConversationUpdatedAt = req.query.lastConversationUpdatedAt;
     const textSearch = req.query.textSearch;
     const user = req.user;
     const { _id } = user;
+    const conversationIdHaveMessage = await Message.find().distinct("conversation")
     const query = {
-      _id: { $gt: lastConversationId },
+      _id: { $in: conversationIdHaveMessage },
       "participants.user": _id,
     };
 
-    if (!lastConversationId) {
-      delete query._id;
+    const total = await Conversation.find(query).countDocuments()
+
+    if (lastConversationUpdatedAt) {
+      query.updatedAt = {
+        $gt: lastConversationUpdatedAt
+      }
     }
 
-    const total = await Conversation.find({ "participants.user": _id, }).countDocuments()
-    console.log("🚀 ~ file: conversation.js ~ line 92 ~ router.get ~ total", total)
 
     const conversations = await Conversation.find(query)
       .limit(limit)
-      .sort({ updatedAt: 1 })
+      .sort({ updatedAt: -1 })
       .populate({
         path: "messages",
         options: {
-          sort: { createdAt: -1 },
-          limit: 1,
+          sort: { _id: -1 },
+          // limit: 1,
           populate: {
             path: "createdBy",
             select: {
+              _id: 1,
               avatar: 1,
               fullName: 1,
-              status: 1,
             },
           }
         },
@@ -112,9 +130,9 @@ router.get("/", requireSignin, async (req, res) => {
       .populate({
         path: "participants.user",
         select: {
+          _id: 1,
           avatar: 1,
           fullName: 1,
-          status: 1,
         },
       })
       .populate({
@@ -179,8 +197,16 @@ router.post("/message", requireSignin, async (req, res) => {
   try {
     const message = req.body.message;
     const conversationId = req.body.conversationId;
-    console.log("🚀 ~ file: conversation.js ~ line 181 ~ router.post ~ conversationId", conversationId)
-    await Conversation.findByIdAndUpdate(conversationId, { updatedAt: Date.now() })
+    const conversationUpdated = await Conversation
+      .findByIdAndUpdate(conversationId, { updatedAt: Date.now() })
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      })
     message.createdBy = req.user._id;
 
     const newMessages = new Message(message);
@@ -192,6 +218,16 @@ router.post("/message", requireSignin, async (req, res) => {
         status: 1,
       }
     })
+    conversationUpdated.messages = [messageResp]
+    const io = res.app.get('socketio')
+    const listSocketConversation = await SocketModel.find({
+      user: {
+        $in: conversationUpdated.participants.map((i) => i.user._id).filter((i) => i.toString() !== req.user._id),
+      },
+    });
+    listSocketConversation.forEach((item) => {
+      io.to(item.socket).emit("new-message", conversationUpdated);
+    });
     return res.status(200).json({
       success: true,
       message: messageResp,

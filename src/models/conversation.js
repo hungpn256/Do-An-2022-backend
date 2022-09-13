@@ -54,7 +54,6 @@ conversationSchema.virtual("messages", {
   ref: "Message",
   localField: "_id",
   foreignField: "conversation",
-  // count: true,
 });
 
 conversationSchema.virtual("numberOfMessages", {

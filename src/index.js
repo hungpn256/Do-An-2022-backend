@@ -30,8 +30,10 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() =>
+  .then(async () => {
+    await SocketModel.deleteMany()
     console.log(`${chalk.green("✓")} ${chalk.blue("MongoDB Connected!")}`)
+  }
   )
   .catch((err) => console.log(err));
 
@@ -51,7 +53,6 @@ io.use((socket, next) => {
 });
 
 app.set("socketio", io);
-
 io.on("connection", async (socket) => {
   const { user } = socket;
   const newSocket = {
