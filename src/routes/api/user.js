@@ -26,10 +26,8 @@ router.get("/profile", requireSignin, async (req, res) => {
           _id: _user._id,
           email: _user.email,
           phoneNumber: _user.phoneNumber,
-          name: {
-            firstName: _user.firstName,
-            lastName: _user.lastName,
-          },
+          firstName: _user.firstName,
+          lastName: _user.lastName,
           friends: _user.friends,
           avatar: _user.avatar,
           cover: _user.cover,
@@ -99,12 +97,12 @@ router.put("/profile", requireSignin, async (req, res) => {
   const user = req.user;
   const update = req.body;
   const query = user._id;
+
+  if (update.firstName !== undefined || update.lastName !== undefined) {
+    update.fullName = `${update.firstName} ${update.lastName}`;
+  }
   try {
-    const updateTime = Date.now();
-    update.update = updateTime;
-    const _user = await User.findByIdAndUpdate(query, update, {
-      new: true,
-    });
+    const _user = await User.findByIdAndUpdate(query, update, { new: true });
 
     res.status(200).json({
       success: true,
@@ -113,16 +111,12 @@ router.put("/profile", requireSignin, async (req, res) => {
         _id: _user._id,
         email: _user.email,
         phoneNumber: _user.phoneNumber,
-        name: {
-          firstName: _user.firstName,
-          lastName: _user.lastName,
-        },
-        location: _user.location,
-        relation: _user.relation,
+        firstName: _user.firstName,
+        lastName: _user.lastName,
         avatar: _user.avatar,
         cover: _user.cover,
         gender: _user.gender,
-        role: _user.role,
+        fullName: _user.fullName,
       },
     });
   } catch (error) {

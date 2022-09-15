@@ -52,7 +52,6 @@ router.post(
         phoneNumber,
         firstName,
         lastName,
-        fullName: `${firstName} ${lastName}`,
         gender,
       });
 
@@ -124,10 +123,8 @@ router.post("/login", validateSigninRequest, isRequestValidated, (req, res) => {
                 _id: user._id,
                 email: user.email,
                 phoneNumber: user.phoneNumber,
-                name: {
-                  firstName: user.firstName,
-                  lastName: user.lastName,
-                },
+                firstName: user.firstName,
+                lastName: user.lastName,
                 fullName: user.fullName,
                 gender: user.gender,
               },
