@@ -23,28 +23,30 @@ router.post("/", requireSignin, async (req, res) => {
 
     const conversations = await Conversation.find({
       $and: [...target, { type: "PRIVATE" }],
-    }).populate({
-      path: "participants.user",
-      select: {
-        avatar: 1,
-        fullName: 1,
-        status: 1,
-      },
-    }).populate({
-      path: "messages",
-      options: {
-        sort: { createdAt: -1 },
-        limit: 1,
-        populate: {
-          path: "createdBy",
-          select: {
-            avatar: 1,
-            fullName: 1,
-            status: 1,
+    })
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      })
+      .populate({
+        path: "messages",
+        options: {
+          sort: { createdAt: -1 },
+          limit: 1,
+          populate: {
+            path: "createdBy",
+            select: {
+              avatar: 1,
+              fullName: 1,
+              status: 1,
+            },
           },
-        }
-      },
-    });
+        },
+      });
 
     if (conversations.length > 0) {
       return res.status(200).json({
@@ -63,23 +65,23 @@ router.post("/", requireSignin, async (req, res) => {
         ],
       });
 
-
       const conversationSave = await newConversation.save();
-      const conversationPopulate = Conversation.populate(conversationSave).populate({
-        path: "messages",
-        options: {
-          sort: { _id: -1 },
-          // limit: 1,
-          populate: {
-            path: "createdBy",
-            select: {
-              _id: 1,
-              avatar: 1,
-              fullName: 1,
+      const conversationPopulate = Conversation.populate(conversationSave)
+        .populate({
+          path: "messages",
+          options: {
+            sort: { _id: -1 },
+            // limit: 1,
+            populate: {
+              path: "createdBy",
+              select: {
+                _id: 1,
+                avatar: 1,
+                fullName: 1,
+              },
             },
-          }
-        },
-      })
+          },
+        })
         .populate({
           path: "participants.user",
           select: {
@@ -89,7 +91,7 @@ router.post("/", requireSignin, async (req, res) => {
           },
         })
         .populate({
-          path: "numberOfMessages"
+          path: "numberOfMessages",
         });
       return res.status(200).json({
         success: true,
@@ -114,20 +116,21 @@ router.get("/", requireSignin, async (req, res) => {
     const textSearch = req.query.textSearch;
     const user = req.user;
     const { _id } = user;
-    const conversationIdHaveMessage = await Message.find().distinct("conversation")
+    const conversationIdHaveMessage = await Message.find().distinct(
+      "conversation"
+    );
     const query = {
       _id: { $in: conversationIdHaveMessage },
       "participants.user": _id,
     };
 
-    const total = await Conversation.find(query).countDocuments()
+    const total = await Conversation.find(query).countDocuments();
 
     if (lastConversationUpdatedAt) {
       query.updatedAt = {
-        $gt: lastConversationUpdatedAt
-      }
+        $gt: lastConversationUpdatedAt,
+      };
     }
-
 
     const conversations = await Conversation.find(query)
       .limit(limit)
@@ -144,7 +147,7 @@ router.get("/", requireSignin, async (req, res) => {
               avatar: 1,
               fullName: 1,
             },
-          }
+          },
         },
       })
       .populate({
@@ -156,7 +159,7 @@ router.get("/", requireSignin, async (req, res) => {
         },
       })
       .populate({
-        path: "numberOfMessages"
+        path: "numberOfMessages",
       });
 
     return res.status(200).json({
@@ -186,17 +189,18 @@ router.get("/:conversationId/message", requireSignin, async (req, res) => {
       delete query._id;
     }
 
-    const total = await Message.find(query).countDocuments()
+    const total = await Message.find(query).countDocuments();
 
     const messages = await Message.find(query)
       .sort({ createdAt: 1 })
       .limit(limit)
       .populate({
-        path: "createdBy", select: {
+        path: "createdBy",
+        select: {
           avatar: 1,
           fullName: 1,
           status: 1,
-        }
+        },
       });
 
     return res.status(200).json({
@@ -217,32 +221,36 @@ router.post("/message", requireSignin, async (req, res) => {
   try {
     const message = req.body.message;
     const conversationId = req.body.conversationId;
-    const conversationUpdated = await Conversation
-      .findByIdAndUpdate(conversationId, { updatedAt: Date.now() })
-      .populate({
-        path: "participants.user",
-        select: {
-          avatar: 1,
-          fullName: 1,
-          status: 1,
-        },
-      })
+    const conversationUpdated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { updatedAt: Date.now() }
+    ).populate({
+      path: "participants.user",
+      select: {
+        avatar: 1,
+        fullName: 1,
+        status: 1,
+      },
+    });
     message.createdBy = req.user._id;
 
     const newMessages = new Message(message);
     const messageSave = await newMessages.save();
     const messageResp = await Message.populate(messageSave, {
-      path: 'createdBy', select: {
+      path: "createdBy",
+      select: {
         avatar: 1,
         fullName: 1,
         status: 1,
-      }
-    })
-    conversationUpdated.messages = [messageResp]
-    const io = res.app.get('socketio')
+      },
+    });
+    conversationUpdated.messages = [messageResp];
+    const io = res.app.get("socketio");
     const listSocketConversation = await SocketModel.find({
       user: {
-        $in: conversationUpdated.participants.map((i) => i.user._id).filter((i) => i.toString() !== req.user._id),
+        $in: conversationUpdated.participants
+          .map((i) => i.user._id)
+          .filter((i) => i.toString() !== req.user._id),
       },
     });
     listSocketConversation.forEach((item) => {
