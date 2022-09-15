@@ -21,8 +21,10 @@ router.post("/", requireSignin, async (req, res) => {
       }),
     ];
 
+    const type = targetIds.length > 1 ? "GROUP" : "PRIVATE";
+
     const conversations = await Conversation.find({
-      $and: [...target, { type: "PRIVATE" }],
+      $and: [...target, { type }],
     })
       .populate({
         path: "participants.user",
@@ -63,15 +65,18 @@ router.post("/", requireSignin, async (req, res) => {
             return { user: i };
           }),
         ],
+        type,
       });
 
       const conversationSave = await newConversation.save();
-      const conversationPopulate = Conversation.populate(conversationSave)
+      const conversationPopulate = await Conversation.findById(
+        conversationSave._id
+      )
         .populate({
           path: "messages",
+          perDocumentLimit: 1,
           options: {
-            sort: { _id: -1 },
-            // limit: 1,
+            sort: { createdAt: -1 },
             populate: {
               path: "createdBy",
               select: {
@@ -137,9 +142,9 @@ router.get("/", requireSignin, async (req, res) => {
       .sort({ updatedAt: -1 })
       .populate({
         path: "messages",
+        perDocumentLimit: 1,
         options: {
-          sort: { _id: -1 },
-          // limit: 1,
+          sort: { createdAt: -1 },
           populate: {
             path: "createdBy",
             select: {
@@ -182,17 +187,15 @@ router.get("/:conversationId/message", requireSignin, async (req, res) => {
     const lastMessageId = req.query.lastMessageId;
     const conversationId = req.params.conversationId;
     const query = {
-      _id: { $lt: lastMessageId },
       conversation: conversationId,
     };
-    if (!lastMessageId) {
-      delete query._id;
+    const total = await Message.find({ ...query }).countDocuments();
+    if (lastMessageId) {
+      query._id = { $lt: lastMessageId };
     }
 
-    const total = await Message.find(query).countDocuments();
-
     const messages = await Message.find(query)
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
       .limit(limit)
       .populate({
         path: "createdBy",

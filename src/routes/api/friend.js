@@ -121,7 +121,6 @@ router.put("/:idUser", requireSignin, async (req, res) => {
 
 router.get("/byStatus", requireSignin, async (req, res) => {
   try {
-    console.log(123);
     const _id = req.user._id;
     const status = req.query.status;
     if (status === "REQUESTED") {
@@ -168,19 +167,23 @@ router.get("/byStatus", requireSignin, async (req, res) => {
 router.get("/:_id", requireSignin, async (req, res) => {
   try {
     const _id = req.params._id;
-    const user = await User.findById(_id).populate({
-      path: "friend",
-      model: "User",
-      options: {
-        sort: {
-          lastLogin: -1,
-        },
-      },
-    });
-    if (user) {
+    const q = req.query.q;
+    const allFriend = await User.findById(_id).distinct('friend');
+    const query = {
+      _id: {
+        $in: allFriend
+      }
+    };
+    if (q) {
+      query.fullName = new RegExp(q, "i")
+    }
+    const friendInSearch = await User.find(query).sort({
+      lastLogin: -1
+    })
+    if (friendInSearch) {
       return res.status(200).json({
         success: true,
-        friends: user.friend,
+        friends: friendInSearch,
       });
     } else {
       return res.status(400).json({
