@@ -220,6 +220,29 @@ router.get("/:conversationId/message", requireSignin, async (req, res) => {
   }
 });
 
+router.put("/:conversationId", requireSignin, async (req, res) => {
+  try {
+    const conversationId = req.params.conversationId;
+    const data = req.body;
+    const conversationUpdated = await Conversation.findByIdAndUpdate(
+      conversationId,
+      data,
+      { new: true }
+    );
+
+    return res.status(200).json({
+      success: true,
+      conversation: conversationUpdated,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: "Some thing went wrong",
+      error: e,
+    });
+  }
+});
+
 router.post("/message", requireSignin, async (req, res) => {
   try {
     const message = req.body.message;
