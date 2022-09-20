@@ -9,6 +9,7 @@ const conversationSchema = new mongoose.Schema({
     type: String,
     enum: ["GROUP", "PRIVATE"],
     default: "PRIVATE",
+    require: true,
   },
   host: {
     type: mongoose.Schema.Types.ObjectId,
@@ -19,6 +20,7 @@ const conversationSchema = new mongoose.Schema({
       user: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
+        require: true,
       },
       nickName: {
         type: String,
@@ -26,19 +28,21 @@ const conversationSchema = new mongoose.Schema({
       },
       lastSeen: {
         type: Date,
+        default: Date.now,
       },
       lastDelete: {
         type: Date,
+        default: Date.now,
       },
     },
   ],
   updatedAt: {
     type: Date,
     default: Date.now,
+    require: true,
   },
   name: {
     type: String,
-    default: null,
   },
   pinMessage: {
     type: mongoose.Schema.Types.ObjectId,

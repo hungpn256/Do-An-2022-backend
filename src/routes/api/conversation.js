@@ -9,6 +9,8 @@ const SocketModel = require("../../models/socket");
 
 const { requireSignin } = require("../../middleware/index.js");
 const mongoose = require("mongoose");
+const { Types } = mongoose;
+const { ObjectId } = Types;
 router.post("/", requireSignin, async (req, res) => {
   try {
     const user = req.user;
@@ -110,6 +112,117 @@ router.post("/", requireSignin, async (req, res) => {
       success: false,
       message: "Get conversation error",
       error: e,
+    });
+  }
+});
+
+router.get("/unseen", requireSignin, async (req, res) => {
+  const user = req.user;
+  const { _id } = user;
+  try {
+    const queryUnseen = await Conversation.aggregate([
+      {
+        $lookup: {
+          from: "messages",
+          localField: "_id",
+          foreignField: "conversation",
+          as: "messages",
+        },
+      },
+      {
+        $match: {
+          "messages.0": { $exists: true },
+          "participants.user": ObjectId(_id),
+        },
+      },
+      {
+        $addFields: {
+          me: {
+            $arrayElemAt: [
+              "$participants",
+              {
+                $indexOfArray: ["$participants.user", ObjectId(_id)],
+              },
+            ],
+          },
+        },
+      },
+      {
+        $addFields: {
+          messUnSeen: {
+            $filter: {
+              input: "$messages",
+              as: "messages",
+              cond: {
+                $and: [
+                  { $gt: ["$$messages.createdAt", "$me.lastSeen"] },
+                  { $ne: ["$$messages.createdBy", "$me.user"] },
+                ],
+              },
+            },
+          },
+        },
+      },
+      { $match: { "messUnSeen.0": { $exists: true } } },
+
+      // {
+      //   $project: {
+      //     messUnSeen: 1,
+      //   },
+      // },
+      {
+        $count: "numOfConversationUnseen",
+      },
+    ]);
+    const numOfConversationUnseen =
+      queryUnseen.length > 0 ? queryUnseen[0].numOfConversationUnseen : 0;
+
+    return res.status(200).json({
+      success: true,
+      numOfConversationUnseen: numOfConversationUnseen,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: "Some thing went wrong",
+      error: e.message,
+    });
+  }
+});
+
+router.post("/unseen", requireSignin, async (req, res) => {
+  try {
+    const user = req.user;
+    const { _id } = user;
+    const { conversationId } = req.body;
+
+    const conversation = await Conversation.findOne({ _id: conversationId });
+    if (conversation) {
+      conversation.participants.forEach((i) => {
+        if (i.user.toString() === _id) {
+          i.lastSeen = Date.now();
+        }
+      });
+      console.log(
+        "🚀 ~ file: conversation.js ~ line 196 ~ conversation.participants.forEach ~ conversation",
+        conversation
+      );
+      await conversation.save();
+      return res.status(200).json({
+        success: true,
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Conversation not found",
+        error: e.message,
+      });
+    }
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: "Some thing went wrong",
+      error: e.message,
     });
   }
 });

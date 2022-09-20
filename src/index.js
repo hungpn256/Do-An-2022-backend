@@ -17,6 +17,7 @@ const io = new Server(server);
 const jwt = require("jsonwebtoken");
 const User = require("./models/user");
 const SocketModel = require("./models/socket");
+const Conversation = require("./models/conversation");
 
 app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -31,11 +32,10 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(async () => {
-    await SocketModel.deleteMany()
-    await User.updateMany({ status: "ONLINE" }, { status: "OFFLINE" })
-    console.log(`${chalk.green("✓")} ${chalk.blue("MongoDB Connected!")}`)
-  }
-  )
+    await SocketModel.deleteMany();
+    await User.updateMany({ status: "ONLINE" }, { status: "OFFLINE" });
+    console.log(`${chalk.green("✓")} ${chalk.blue("MongoDB Connected!")}`);
+  })
   .catch((err) => console.log(err));
 
 app.get("/", (req, res) => {
