@@ -43,6 +43,7 @@ const conversationSchema = new mongoose.Schema({
   },
   name: {
     type: String,
+    default: null,
   },
   pinMessage: {
     type: mongoose.Schema.Types.ObjectId,

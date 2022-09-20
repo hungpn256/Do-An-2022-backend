@@ -337,12 +337,11 @@ router.put("/:conversationId", requireSignin, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
     const data = req.body;
-    const conversationUpdated = await Conversation.findByIdAndUpdate(
-      conversationId,
-      data,
-      { new: true }
-    );
-
+    const conversationUpdated = await Conversation.findById(conversationId);
+    Object.keys(data).forEach((key) => {
+      conversationUpdated[key] = data[key];
+    });
+    await conversationUpdated.save();
     return res.status(200).json({
       success: true,
       conversation: conversationUpdated,
