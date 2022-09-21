@@ -17,6 +17,11 @@ const messageSchema = new mongoose.Schema({
       },
     },
   ],
+  type: {
+    type: String,
+    enum: ["MESSAGE", "NOTIFICATION"],
+    default: "MESSAGE",
+  },
   reply: {
     type: mongoose.Schema.Types.ObjectId,
   },

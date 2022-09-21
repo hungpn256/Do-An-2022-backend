@@ -3,17 +3,19 @@ const Post = require("../../models/post.js");
 const User = require("../../models/user.js");
 const Comment = require("../../models/comment.js");
 const Like = require("../../models/like.js");
-
+const mongoose = require("mongoose");
+const { Types } = mongoose;
+const { ObjectId } = Types;
 const { requireSignin } = require("../../middleware/index.js");
 
 router.post("/create", requireSignin, async (req, res) => {
   const user = req.user;
-  const { text, images, action } = req.body;
+  const { text, files, action } = req.body;
 
   const post = {
     text,
-    createBy: user._id,
-    images: images,
+    createdBy: user._id,
+    files: files,
     action,
     comment: [],
     liked: [],
@@ -49,7 +51,7 @@ router.put("/:id/text", requireSignin, async (req, res) => {
   const id = req.params.id;
   const query = {
     _id: id,
-    createBy: user,
+    createdBy: user,
   };
 
   const update = {
@@ -83,7 +85,7 @@ router.delete("/:id", requireSignin, async (req, res) => {
   const id = req.params.id;
   const query = {
     _id: id,
-    createBy: user,
+    createdBy: user,
   };
   const update = req.body;
 
@@ -105,100 +107,6 @@ router.delete("/:id", requireSignin, async (req, res) => {
       post: _post,
     });
   });
-});
-
-router.get("/", async (req, res) => {
-  const limit = req.query.limit || 10;
-  const _id = req.query._id;
-  const query = { _id: { $lt: _id } };
-  if (!_id) {
-    delete query._id;
-  }
-  const count = await Post.countDocuments();
-
-  Post.find(query)
-    .sort({ createdAt: "desc" })
-    .limit(Number(limit))
-    .exec(async (err, posts) => {
-      if (err) {
-        return res.status(400).json({
-          error: err,
-        });
-      }
-
-      const _posts = await posts.map((post) => {
-        return {
-          createBy: {
-            avatar: post.createBy.avatar,
-            fullName: post.createBy.fullName,
-            _id: post.createBy._id,
-          },
-          _id: post._id,
-          images: post.images,
-          liked: post.liked,
-          text: post.text,
-          createdAt: post.createdAt,
-          updateAt: post.updateAt,
-          action: post.action,
-          numOfCmt: post.comment.length,
-          comment: post.comment.splice(-1, 1),
-        };
-      });
-
-      return res.status(200).json({
-        success: true,
-        posts: _posts,
-        totalPost: count,
-      });
-    });
-});
-
-router.get("/:userId", async (req, res) => {
-  const userId = req.params.userId;
-  const limit = req.query.limit || 10;
-  const _id = req.query._id;
-
-  const query = { _id: { $lt: _id }, createBy: userId };
-  if (!_id) {
-    delete query._id;
-  }
-  const count = await Post.countDocuments();
-
-  Post.find(query)
-    .sort({ createdAt: "desc" })
-    .limit(Number(limit))
-    .exec(async (err, posts) => {
-      if (err) {
-        return res.status(400).json({
-          error: err,
-        });
-      }
-
-      const _posts = await posts.map((post) => {
-        return {
-          createBy: {
-            avatar: post.createBy.avatar,
-            fullName: post.createBy.fullName,
-            _id: post.createBy._id,
-          },
-          _id: post._id,
-          images: post.images,
-          liked: post.liked,
-          text: post.text,
-          createdAt: post.createdAt,
-          updateAt: post.updateAt,
-          action: post.action,
-          numOfCmt: post.comment.length,
-          comment: post.comment.splice(-1, 1),
-        };
-      });
-
-      return res.status(200).json({
-        success: true,
-        posts: _posts,
-        totalPost: count,
-      });
-    });
 });
 
 router.post("/comment/:id", requireSignin, async (req, res) => {
@@ -391,6 +299,122 @@ router.get("/comment/:idPost", requireSignin, async (req, res) => {
     message: "Get comment successfully",
     comment: post.comment,
   });
+});
+
+router.get("/photos", requireSignin, async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    const post = await Post.find({ createdBy: userId }).distinct("files");
+    if (!post) {
+      return res.status(400).json({
+        message: "Post not found",
+      });
+    }
+    return res.status(200).json({
+      message: "Get comment successfully",
+      files: post,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: "Something went wrong",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/:userId", async (req, res) => {
+  const userId = req.params.userId;
+  const limit = req.query.limit || 10;
+  const _id = req.query._id;
+
+  const query = { _id: { $lt: _id }, createdBy: userId };
+  if (!_id) {
+    delete query._id;
+  }
+  const count = await Post.countDocuments();
+
+  Post.find(query)
+    .sort({ createdAt: "desc" })
+    .limit(Number(limit))
+    .exec(async (err, posts) => {
+      if (err) {
+        return res.status(400).json({
+          error: err,
+        });
+      }
+
+      const _posts = await posts.map((post) => {
+        return {
+          createdBy: {
+            avatar: post.createdBy.avatar,
+            fullName: post.createdBy.fullName,
+            _id: post.createdBy._id,
+          },
+          _id: post._id,
+          files: post.files,
+          liked: post.liked,
+          text: post.text,
+          createdAt: post.createdAt,
+          updateAt: post.updateAt,
+          action: post.action,
+          numOfCmt: post.comment.length,
+          comment: post.comment.splice(-1, 1),
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: _posts,
+        totalPost: count,
+      });
+    });
+});
+
+router.get("/", async (req, res) => {
+  const limit = req.query.limit || 10;
+  const _id = req.query._id;
+  const query = { _id: { $lt: _id } };
+  if (!_id) {
+    delete query._id;
+  }
+  const count = await Post.countDocuments();
+
+  Post.find(query)
+    .sort({ createdAt: "desc" })
+    .limit(Number(limit))
+    .exec(async (err, posts) => {
+      if (err) {
+        return res.status(400).json({
+          error: err,
+        });
+      }
+
+      const _posts = await posts.map((post) => {
+        return {
+          createdBy: {
+            avatar: post.createdBy.avatar,
+            fullName: post.createdBy.fullName,
+            _id: post.createdBy._id,
+          },
+          _id: post._id,
+          files: post.files,
+          liked: post.liked,
+          text: post.text,
+          createdAt: post.createdAt,
+          updateAt: post.updateAt,
+          action: post.action,
+          numOfCmt: post.comment.length,
+          comment: post.comment.splice(-1, 1),
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: _posts,
+        totalPost: count,
+      });
+    });
 });
 
 module.exports = router;

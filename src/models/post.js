@@ -8,7 +8,7 @@ const postSchema = new mongoose.Schema({
   action: {
     type: String,
   },
-  images: [
+  files: [
     {
       url: String,
       typeMedia: {
@@ -23,7 +23,7 @@ const postSchema = new mongoose.Schema({
       ref: "Like",
     },
   ],
-  createBy: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
@@ -47,7 +47,7 @@ const postSchema = new mongoose.Schema({
 postSchema.pre("find", function () {
   this.populate([
     {
-      path: "createBy",
+      path: "createdBy",
       select: {
         avatar: 1,
         fullName: 1,
@@ -65,7 +65,7 @@ postSchema.pre("find", function () {
 postSchema.pre("findOne", function () {
   this.populate([
     {
-      path: "createBy",
+      path: "createdBy",
       select: {
         avatar: 1,
         fullName: 1,
