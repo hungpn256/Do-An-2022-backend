@@ -6,6 +6,23 @@ const User = require("../../models/user.js");
 const keys = require("../../config/keys.js");
 const Friend = require("../../models/friend");
 
+router.get("/birthday", async (req, res) => {
+  User.aggregate([
+    {
+      $redact: {
+        $cond: [
+          {
+            $eq: [{ $month: "$birthday" }, { $month: new Date() }],
+          },
+        ],
+      },
+    },
+  ]).exec(function (err, docs) {
+    if (err) throw err;
+    console.log(docs);
+  });
+});
+
 router.get("/profile", requireSignin, async (req, res) => {
   const user = req.user;
   User.findOne({ _id: user._id }).exec((err, _user) => {
