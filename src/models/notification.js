@@ -38,6 +38,12 @@ const notificationSchema = new mongoose.Schema({
       ref: "User",
     },
   ],
+  userRelative: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
 });
 
 notificationSchema.pre("save", function () {
