@@ -7,6 +7,7 @@ const mongoose = require("mongoose");
 const { Types } = mongoose;
 const { ObjectId } = Types;
 const { requireSignin } = require("../../middleware/index.js");
+const { createNotifications } = require("../../services/notification.js");
 
 router.post("/create", requireSignin, async (req, res) => {
   const user = req.user;
@@ -227,6 +228,22 @@ router.post("/like/:id", requireSignin, async (req, res) => {
           model: "User",
         },
       });
+    if (
+      !(
+        likedByCurrentUser &&
+        likedByCurrentUser.type === likeReq.type &&
+        _post.createdBy._id.toString() !== userId
+      )
+    ) {
+      await createNotifications(
+        res,
+        {
+          type: "LIKE_POST",
+          post: _post._id,
+        },
+        userId
+      );
+    }
     return res.status(200).json({
       success: true,
       message: "Like post successfully.",
@@ -235,7 +252,7 @@ router.post("/like/:id", requireSignin, async (req, res) => {
   } catch (error) {
     return res.status(400).json({
       message: "Your request could not be processed. Please try again.",
-      error,
+      error: error.message,
     });
   }
 });
