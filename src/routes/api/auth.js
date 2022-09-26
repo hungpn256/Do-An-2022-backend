@@ -136,7 +136,7 @@ router.post("/login", validateSigninRequest, isRequestValidated, (req, res) => {
     });
 });
 
-router.post("/send-email-forgot-password", (req, res) => {
+router.post("/send-email-password", (req, res) => {
   const { email } = req.body;
 
   if (!email) {
