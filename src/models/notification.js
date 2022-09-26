@@ -9,35 +9,45 @@ const notificationSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  content: {
-    type: String,
-  },
-  files: {
-    url: String,
-    typeMedia: {
-      type: String,
-      enum: ["IMAGE"],
-      default: "IMAGE",
-    },
-  },
-  url: {
-    type: String,
-    ref: "Conversation",
-  },
   type: {
     type: String,
-    enum: ["FRIEND", "NOTIFICATION"],
-    default: "FRIEND",
+    enum: [
+      "LIKE_POST",
+      "LIKE_COMMENT",
+      "REPLY_COMMENT",
+      "COMMENT_POST",
+      "ACCREP_FRIEND",
+    ],
+    default: "LIKE_POST",
   },
-  reply: {
+  post: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Post",
   },
+  comment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Comment",
+  },
+  friend: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Friend",
+  },
+  userSeen: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  ],
   userRelative: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
   ],
+});
+
+notificationSchema.pre("save", function () {
+  this.updatedAt = Date.now();
 });
 
 module.exports = mongoose.model("Notification", notificationSchema);

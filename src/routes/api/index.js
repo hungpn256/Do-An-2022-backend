@@ -5,6 +5,7 @@ const userRoutes = require("./user.js");
 const postRoutes = require("./post.js");
 const friendRoutes = require("./friend");
 const conversationRoutes = require("./conversation");
+const notificationRoutes = require("./notification");
 const { queryVarUser, queryVarPost } = require("../../services/query.js");
 const User = require("../../models/user.js");
 const Post = require("../../models/post.js");
@@ -24,6 +25,9 @@ router.use("/friend", friendRoutes);
 
 //conversation routes
 router.use("/conversation", conversationRoutes);
+
+//notifications routes
+router.use("/notification", notificationRoutes);
 
 router.get("/search", async (req, res) => {
   let q = req.query.q;
