@@ -118,25 +118,34 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
       _id: id,
     };
 
-    const _post = await Post.find(query);
-    if (!_post.length)
+    const _post = await Post.findOne(query);
+    if (!_post)
       return res.status(400).json({
         success: false,
         message: `You can't comment this post.`,
       });
     const _comment = new Comment({ ...req.body.comment, createdBy: userId });
     const commentSave = await _comment.save();
-    _post[0].comment.push(commentSave._id);
-    await _post[0].save();
+    _post.comment.push(commentSave._id);
+    await _post.save();
     const commentResponse = await Comment.findOne({
       _id: commentSave._id,
     }).populate("createdBy", "avatar fullName");
+    await createNotifications(
+      res,
+      {
+        type: "COMMENT_POST",
+        post: _post._id,
+      },
+      userId
+    );
     return res.status(200).json({
       success: true,
       message: "Comment post successfully.",
       comment: commentResponse,
     });
   } catch (err) {
+    console.log("🚀 ~ file: post.js ~ line 148 ~ router.post ~ err", err);
     return res.status(400).json({
       error: "Your request could not be processed. Please try again.",
     });

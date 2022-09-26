@@ -21,19 +21,12 @@ const createNotifications = async (res, notification, userId) => {
     _notification = notificationExist;
   }
 
-  if (
-    _notification.type === "LIKE_POST" ||
-    _notification.type === "COMMENT_POST"
-  ) {
+  if (_notification.type === "LIKE_POST") {
+    const _post = await Post.findOne({ _id: notification.post });
+    usersNoti = [_post.createdBy._id.toString()];
+  } else if (_notification.type === "COMMENT_POST") {
     const _post = await Post.findOne({ _id: notification.post });
     const userSet = new Set([
-      ...(
-        await Like.find({
-          _id: {
-            $in: _post.liked,
-          },
-        }).distinct("likedBy")
-      ).map((i) => i.toString()),
       ...(
         await Comment.find({
           _id: {
@@ -48,6 +41,7 @@ const createNotifications = async (res, notification, userId) => {
   }
 
   _notification.userRelative = usersNoti;
+  _notification.userSeen = [];
   const notificationSave = await _notification.save();
   const notificaitonRes = await Notification.populate(notificationSave, [
     { path: "post" },
