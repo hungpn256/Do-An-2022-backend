@@ -9,7 +9,7 @@ const createNotifications = async (res, notification, userId) => {
   const notificationExist = await Notification.findOne({
     type: notification.type,
     post: notification.post,
-    comment: notification.comment,
+    "comment.replyTo": notification.comment.replyTo,
   });
 
   let _notification = new Notification(notification);
@@ -38,6 +38,9 @@ const createNotifications = async (res, notification, userId) => {
     ]);
 
     usersNoti = Array.from(userSet).filter((i) => i !== userId);
+  } else if (_notification.type === "REPLY_COMMENT") {
+    const commentReply = await Comment.findById(notification.comment.replyTo);
+    usersNoti = [commentReply.createdBy._id.toString()];
   }
 
   _notification.userRelative = usersNoti;
@@ -45,7 +48,7 @@ const createNotifications = async (res, notification, userId) => {
   const notificationSave = await _notification.save();
   const notificaitonRes = await Notification.populate(notificationSave, [
     { path: "post" },
-    { path: "comment" },
+    { path: "comment.replyTo comment.newComment" },
     {
       path: "userRelative",
       select: {

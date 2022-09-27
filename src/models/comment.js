@@ -11,8 +11,8 @@ const commentSchema = new mongoose.Schema({
       },
       typeMedia: {
         type: String,
-        enum: ["IMAGE", "VIDEO"]
-      }
+        enum: ["IMAGE", "VIDEO"],
+      },
     },
   ],
   liked: [
@@ -38,8 +38,15 @@ const commentSchema = new mongoose.Schema({
   ],
 });
 
-commentSchema.pre('find', function () {
-  this.populate('createdBy reply liked')
-})
+commentSchema.pre("find", function () {
+  this.populate({
+    path: "createdBy",
+    select: {
+      _id: 1,
+      fullName: 1,
+      avatar: 1,
+    },
+  }).populate("reply liked");
+});
 
 module.exports = mongoose.model("Comment", commentSchema);

@@ -156,10 +156,17 @@ router.post("/rep-comment/:id", requireSignin, async (req, res) => {
   try {
     const userId = req.user._id;
     const id = req.params.id;
-    const postId = req.params.postId;
     const query = {
       _id: id,
     };
+
+    const _post = await Post.findOne({ comment: id });
+
+    if (!_post) {
+      return res.status(400).json({
+        message: "post not found",
+      });
+    }
 
     const _comment = await Comment.findOne(query);
     if (!_comment)
@@ -174,9 +181,23 @@ router.post("/rep-comment/:id", requireSignin, async (req, res) => {
     const commentResponse = await Comment.findOne({
       _id: commentSave._id,
     }).populate("createdBy");
+
+    await createNotifications(
+      res,
+      {
+        type: "REPLY_COMMENT",
+        post: _post._id,
+        comment: {
+          newComment: commentResponse._id,
+          replyTo: _comment._id,
+        },
+      },
+      userId
+    );
+
     return res.status(200).json({
       success: true,
-      message: "Comment post successfully.",
+      message: "Rep comment successfully.",
       comment: commentResponse,
     });
   } catch (err) {
@@ -349,7 +370,7 @@ router.get("/photos", requireSignin, async (req, res) => {
   }
 });
 
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", requireSignin, async (req, res) => {
   const userId = req.params.userId;
   const limit = req.query.limit || 10;
   const _id = req.query._id;
@@ -397,7 +418,41 @@ router.get("/:userId", async (req, res) => {
     });
 });
 
-router.get("/", async (req, res) => {
+router.get("/detail/:id", requireSignin, async (req, res) => {
+  const id = req.params.id;
+
+  Post.findById(id).exec(async (err, post) => {
+    if (err) {
+      return res.status(400).json({
+        error: err,
+      });
+    }
+
+    const _post = {
+      createdBy: {
+        avatar: post.createdBy.avatar,
+        fullName: post.createdBy.fullName,
+        _id: post.createdBy._id,
+      },
+      _id: post._id,
+      files: post.files,
+      liked: post.liked,
+      text: post.text,
+      createdAt: post.createdAt,
+      updateAt: post.updateAt,
+      action: post.action,
+      numOfCmt: post.comment.length,
+      comment: post.comment.splice(-1, 1),
+    };
+
+    return res.status(200).json({
+      success: true,
+      post: _post,
+    });
+  });
+});
+
+router.get("/", requireSignin, async (req, res) => {
   const limit = req.query.limit || 10;
   const _id = req.query._id;
   const query = { _id: { $lt: _id } };

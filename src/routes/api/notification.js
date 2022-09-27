@@ -93,7 +93,7 @@ router.get("/", requireSignin, async (req, res) => {
     })
       .sort({ updatedAt: -1 })
       .populate("post")
-      .populate("comment")
+      .populate("comment.replyTo comment.newComment")
       .populate("friend")
       .exec();
 
