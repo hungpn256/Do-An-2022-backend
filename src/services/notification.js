@@ -9,7 +9,7 @@ const createNotifications = async (res, notification, userId) => {
   const notificationExist = await Notification.findOne({
     type: notification.type,
     post: notification.post,
-    "comment.replyTo": notification.comment.replyTo,
+    "comment.replyTo": notification.comment?.replyTo,
   });
 
   let _notification = new Notification(notification);
