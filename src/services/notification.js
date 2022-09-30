@@ -3,6 +3,10 @@ const Comment = require("../models/comment");
 const Post = require("../models/post");
 const Notification = require("../models/notification");
 const SocketModel = require("../models/socket");
+const mongoose = require("mongoose");
+const { Types } = mongoose;
+const { ObjectId } = Types;
+
 const createNotifications = async (res, notification, userId) => {
   let usersNoti = [];
 
@@ -23,7 +27,12 @@ const createNotifications = async (res, notification, userId) => {
 
   if (_notification.type === "LIKE_POST") {
     const _post = await Post.findOne({ _id: notification.post });
-    usersNoti = [_post.createdBy._id.toString()];
+    usersNoti = [
+      _post.createdBy._id.toString(),
+      ..._post.notificationTo.map((i) => i.toString()),
+    ].filter(
+      (i) => i !== userId && !_post.notificationOff.includes(ObjectId(i))
+    );
   } else if (_notification.type === "COMMENT_POST") {
     const _post = await Post.findOne({ _id: notification.post });
     const userSet = new Set([
@@ -35,9 +44,12 @@ const createNotifications = async (res, notification, userId) => {
         }).distinct("createdBy")
       ).map((i) => i.toString()),
       _post.createdBy._id.toString(),
+      ..._post.notificationTo.map((i) => i.toString()),
     ]);
 
-    usersNoti = Array.from(userSet).filter((i) => i !== userId);
+    usersNoti = Array.from(userSet).filter(
+      (i) => i !== userId && !_post.notificationOff.includes(ObjectId(i))
+    );
   } else if (_notification.type === "REPLY_COMMENT") {
     const commentReply = await Comment.findById(notification.comment.replyTo);
     usersNoti = [commentReply.createdBy._id.toString()];

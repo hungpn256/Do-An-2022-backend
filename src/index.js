@@ -16,6 +16,7 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const jwt = require("jsonwebtoken");
 const User = require("./models/user");
+const Post = require("./models/post");
 const SocketModel = require("./models/socket");
 const Conversation = require("./models/conversation");
 
@@ -34,6 +35,15 @@ mongoose
   .then(async () => {
     await SocketModel.deleteMany();
     await User.updateMany({ status: "ONLINE" }, { status: "OFFLINE" });
+    // await Post.updateMany(
+    //   {},
+    //   {
+    //     $set: {
+    //       notificationTo: [],
+    //       notificationOff: [],
+    //     },
+    //   }
+    // );
     console.log(`${chalk.green("✓")} ${chalk.blue("MongoDB Connected!")}`);
   })
   .catch((err) => console.log(err));

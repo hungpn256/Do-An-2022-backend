@@ -42,6 +42,8 @@ const postSchema = new mongoose.Schema({
       ref: "Comment",
     },
   ],
+  notificationTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  notificationOff: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 });
 
 postSchema.pre("find", function () {

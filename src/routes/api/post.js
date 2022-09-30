@@ -47,6 +47,62 @@ router.post("/create", requireSignin, async (req, res) => {
   });
 });
 
+router.post("/on-notification", requireSignin, async (req, res) => {
+  const user = req.user;
+  const { postId } = req.body;
+
+  try {
+    await Post.updateOne(
+      { _id: postId },
+      {
+        $addToSet: {
+          notificationTo: user._id,
+        },
+        $pull: {
+          notificationOff: user._id,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Turn on notification successfully.",
+    });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Your request could not be processed. Please try again.",
+    });
+  }
+});
+
+router.post("/off-notification", requireSignin, async (req, res) => {
+  const user = req.user;
+  const { postId } = req.body;
+
+  try {
+    await Post.updateOne(
+      { _id: postId },
+      {
+        $addToSet: {
+          notificationOff: user._id,
+        },
+        $pull: {
+          notificationTo: user._id,
+        },
+      }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Turn off notification successfully.",
+    });
+  } catch (err) {
+    return res.status(400).json({
+      error: "Your request could not be processed. Please try again.",
+    });
+  }
+});
+
 router.put("/:id/text", requireSignin, async (req, res) => {
   const user = req.user._id;
   const id = req.params.id;
