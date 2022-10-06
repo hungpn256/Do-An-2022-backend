@@ -11,110 +11,6 @@ const { requireSignin } = require("../../middleware/index.js");
 const mongoose = require("mongoose");
 const { Types } = mongoose;
 const { ObjectId } = Types;
-router.post("/", requireSignin, async (req, res) => {
-  try {
-    const user = req.user;
-    const { _id } = user;
-    const { targetIds } = req.body;
-    const target = [
-      { "participants.user": _id },
-      ...targetIds.map((i) => {
-        return { "participants.user": i };
-      }),
-    ];
-
-    const type = targetIds.length > 1 ? "GROUP" : "PRIVATE";
-
-    const conversations = await Conversation.find({
-      $and: [...target, { type }],
-    })
-      .populate({
-        path: "participants.user",
-        select: {
-          avatar: 1,
-          fullName: 1,
-          status: 1,
-        },
-      })
-      .populate({
-        path: "messages",
-        options: {
-          sort: { createdAt: -1 },
-          limit: 1,
-          populate: {
-            path: "createdBy",
-            select: {
-              avatar: 1,
-              fullName: 1,
-              status: 1,
-            },
-          },
-        },
-      });
-
-    if (conversations.length > 0) {
-      return res.status(200).json({
-        success: true,
-        message: "Get conversation successfully",
-        conversation: conversations[0],
-      });
-    } else {
-      const newConversation = new Conversation({
-        host: _id,
-        participants: [
-          { user: _id },
-          ...targetIds.map((i) => {
-            return { user: i };
-          }),
-        ],
-        type,
-      });
-
-      const conversationSave = await newConversation.save();
-      const conversationPopulate = await Conversation.findById(
-        conversationSave._id
-      )
-        .populate({
-          path: "messages",
-          perDocumentLimit: 1,
-          options: {
-            sort: { createdAt: -1 },
-            populate: {
-              path: "createdBy",
-              select: {
-                _id: 1,
-                avatar: 1,
-                fullName: 1,
-              },
-            },
-          },
-        })
-        .populate({
-          path: "participants.user",
-          select: {
-            _id: 1,
-            avatar: 1,
-            fullName: 1,
-          },
-        })
-        .populate({
-          path: "numberOfMessages",
-        });
-      return res.status(200).json({
-        success: true,
-        message: "Get conversation successfully",
-        conversation: conversationPopulate,
-      });
-    }
-  } catch (e) {
-    console.log(e);
-    return res.status(400).json({
-      success: false,
-      message: "Get conversation error",
-      error: e,
-    });
-  }
-});
 
 router.get("/unseen", requireSignin, async (req, res) => {
   const user = req.user;
@@ -402,6 +298,157 @@ router.post("/message", requireSignin, async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Some thing went wrong",
+      error: e,
+    });
+  }
+});
+
+router.post("/", requireSignin, async (req, res) => {
+  try {
+    const user = req.user;
+    const { _id } = user;
+    const { targetIds } = req.body;
+    const target = [
+      { "participants.user": _id },
+      ...targetIds.map((i) => {
+        return { "participants.user": i };
+      }),
+    ];
+
+    const type = targetIds.length > 1 ? "GROUP" : "PRIVATE";
+
+    const conversations = await Conversation.find({
+      $and: [...target, { type }],
+    })
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      })
+      .populate({
+        path: "messages",
+        options: {
+          sort: { createdAt: -1 },
+          limit: 1,
+          populate: {
+            path: "createdBy",
+            select: {
+              avatar: 1,
+              fullName: 1,
+              status: 1,
+            },
+          },
+        },
+      });
+
+    if (conversations.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: "Get conversation successfully",
+        conversation: conversations[0],
+      });
+    } else {
+      const newConversation = new Conversation({
+        host: _id,
+        participants: [
+          { user: _id },
+          ...targetIds.map((i) => {
+            return { user: i };
+          }),
+        ],
+        type,
+      });
+
+      const conversationSave = await newConversation.save();
+      const conversationPopulate = await Conversation.findById(
+        conversationSave._id
+      )
+        .populate({
+          path: "messages",
+          perDocumentLimit: 1,
+          options: {
+            sort: { createdAt: -1 },
+            populate: {
+              path: "createdBy",
+              select: {
+                _id: 1,
+                avatar: 1,
+                fullName: 1,
+              },
+            },
+          },
+        })
+        .populate({
+          path: "participants.user",
+          select: {
+            _id: 1,
+            avatar: 1,
+            fullName: 1,
+          },
+        })
+        .populate({
+          path: "numberOfMessages",
+        });
+      return res.status(200).json({
+        success: true,
+        message: "Get conversation successfully",
+        conversation: conversationPopulate,
+      });
+    }
+  } catch (e) {
+    console.log(e);
+    return res.status(400).json({
+      success: false,
+      message: "Get conversation error",
+      error: e,
+    });
+  }
+});
+
+router.post("/change-nickname", requireSignin, async (req, res) => {
+  try {
+    const { userId, nickName, conversationId } = req.body;
+    const conversation = await Conversation.findById(conversationId);
+    // conversation.participants.forEach((i) => {
+    //   if (i.user === ObjectId(userId)) {
+    //     i.nickName === nickName;
+    //   }
+    // });
+    await Conversation.updateOne(
+      { _id: conversationId, "participants.user": userId },
+      {
+        $set: {
+          "participants.$.nickName": nickName,
+        },
+      }
+    );
+    await conversation.save();
+    const io = res.app.get("socketio");
+    const users = conversation.participants.map((i) => i.user);
+    const listSocket = await SocketModel.find({
+      user: {
+        $in: users,
+      },
+    });
+    listSocket.forEach((item) => {
+      io.to(item.socket).emit("change-nickname", {
+        userId,
+        nickName,
+        conversationId,
+      });
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Change nickname successfully",
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(400).json({
+      success: false,
+      message: "Get conversation error",
       error: e,
     });
   }
