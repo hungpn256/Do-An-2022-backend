@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Post = require("../../models/post.js");
 const User = require("../../models/user.js");
 const Comment = require("../../models/comment.js");
+const Notification = require("../../models/notification.js");
 const Like = require("../../models/like.js");
 const mongoose = require("mongoose");
 const { Types } = mongoose;
@@ -146,7 +147,7 @@ router.delete("/:id", requireSignin, async (req, res) => {
   };
   const update = req.body;
 
-  await Post.findOneAndDelete(query, update).exec((err, _post) => {
+  Post.findOneAndDelete(query, update).exec(async (err, _post) => {
     if (err)
       return res.status(400).json({
         error: "Your request could not be processed. Please try again.",
@@ -157,7 +158,7 @@ router.delete("/:id", requireSignin, async (req, res) => {
         success: false,
         message: `You can't delete this post.`,
       });
-
+    await Notification.deleteMany({ post: _post._id });
     return res.status(200).json({
       success: true,
       message: "Delete post successfully.",

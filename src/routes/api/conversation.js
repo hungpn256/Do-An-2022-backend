@@ -6,6 +6,7 @@ const Like = require("../../models/like.js");
 const Conversation = require("../../models/conversation");
 const Message = require("../../models/message");
 const SocketModel = require("../../models/socket");
+const CronJob = require("cron").CronJob;
 
 const { requireSignin } = require("../../middleware/index.js");
 const mongoose = require("mongoose");
@@ -303,6 +304,118 @@ router.post("/message", requireSignin, async (req, res) => {
   }
 });
 
+router.post("/cron", requireSignin, async (req, res) => {
+  try {
+    const time = req.body.time;
+    const message = req.body.message;
+    const conversationId = req.body.conversationId;
+
+    console.log(
+      "🚀 ~ file: conversation.js ~ line 310 ~ router.post ~ time",
+      time
+    );
+    const job = new CronJob(
+      new Date(time),
+      async () => {
+        const conversationUpdated = await Conversation.findByIdAndUpdate(
+          conversationId,
+          { updatedAt: Date.now() }
+        ).populate({
+          path: "participants.user",
+          select: {
+            avatar: 1,
+            fullName: 1,
+            status: 1,
+          },
+        });
+        message.createdBy = req.user._id;
+
+        const newMessages = new Message(message);
+        const messageSave = await newMessages.save();
+        const messageResp = await Message.populate(messageSave, {
+          path: "createdBy",
+          select: {
+            avatar: 1,
+            fullName: 1,
+            status: 1,
+          },
+        });
+        conversationUpdated.messages = [messageResp];
+        console.log("oke");
+        const io = res.app.get("socketio");
+        const listSocketConversation = await SocketModel.find({
+          user: {
+            $in: conversationUpdated.participants.map((i) => i.user._id),
+          },
+        });
+        listSocketConversation.forEach((item) => {
+          io.to(item.socket).emit("new-message", conversationUpdated);
+        });
+      },
+      undefined,
+      true,
+      "UTC"
+    );
+    job.start();
+
+    return res.status(200).json({
+      success: true,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: "Some thing went wrong",
+      error: e.message,
+    });
+  }
+});
+
+router.post("/change-nickname", requireSignin, async (req, res) => {
+  try {
+    const { userId, nickName, conversationId } = req.body;
+    const conversation = await Conversation.findById(conversationId);
+    // conversation.participants.forEach((i) => {
+    //   if (i.user === ObjectId(userId)) {
+    //     i.nickName === nickName;
+    //   }
+    // });
+    await Conversation.updateOne(
+      { _id: conversationId, "participants.user": userId },
+      {
+        $set: {
+          "participants.$.nickName": nickName,
+        },
+      }
+    );
+    await conversation.save();
+    const io = res.app.get("socketio");
+    const users = conversation.participants.map((i) => i.user);
+    const listSocket = await SocketModel.find({
+      user: {
+        $in: users,
+      },
+    });
+    listSocket.forEach((item) => {
+      io.to(item.socket).emit("change-nickname", {
+        userId,
+        nickName,
+        conversationId,
+      });
+    });
+    return res.status(200).json({
+      success: true,
+      message: "Change nickname successfully",
+    });
+  } catch (e) {
+    console.log(e);
+    return res.status(400).json({
+      success: false,
+      message: "Get conversation error",
+      error: e,
+    });
+  }
+});
+
 router.post("/", requireSignin, async (req, res) => {
   try {
     const user = req.user;
@@ -398,52 +511,6 @@ router.post("/", requireSignin, async (req, res) => {
         conversation: conversationPopulate,
       });
     }
-  } catch (e) {
-    console.log(e);
-    return res.status(400).json({
-      success: false,
-      message: "Get conversation error",
-      error: e,
-    });
-  }
-});
-
-router.post("/change-nickname", requireSignin, async (req, res) => {
-  try {
-    const { userId, nickName, conversationId } = req.body;
-    const conversation = await Conversation.findById(conversationId);
-    // conversation.participants.forEach((i) => {
-    //   if (i.user === ObjectId(userId)) {
-    //     i.nickName === nickName;
-    //   }
-    // });
-    await Conversation.updateOne(
-      { _id: conversationId, "participants.user": userId },
-      {
-        $set: {
-          "participants.$.nickName": nickName,
-        },
-      }
-    );
-    await conversation.save();
-    const io = res.app.get("socketio");
-    const users = conversation.participants.map((i) => i.user);
-    const listSocket = await SocketModel.find({
-      user: {
-        $in: users,
-      },
-    });
-    listSocket.forEach((item) => {
-      io.to(item.socket).emit("change-nickname", {
-        userId,
-        nickName,
-        conversationId,
-      });
-    });
-    return res.status(200).json({
-      success: true,
-      message: "Change nickname successfully",
-    });
   } catch (e) {
     console.log(e);
     return res.status(400).json({
