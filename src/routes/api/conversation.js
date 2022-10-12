@@ -259,14 +259,16 @@ router.post("/message", requireSignin, async (req, res) => {
     const conversationUpdated = await Conversation.findByIdAndUpdate(
       conversationId,
       { updatedAt: Date.now() }
-    ).populate({
-      path: "participants.user",
-      select: {
-        avatar: 1,
-        fullName: 1,
-        status: 1,
-      },
-    });
+    )
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      })
+      .populate("pinMessage");
     message.createdBy = req.user._id;
 
     const newMessages = new Message(message);

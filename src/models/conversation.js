@@ -67,4 +67,12 @@ conversationSchema.virtual("numberOfMessages", {
   count: true,
 });
 
+conversationSchema.pre("find", function () {
+  this.populate("pinMessage");
+});
+
+conversationSchema.pre("findOne", function () {
+  this.populate("pinMessage");
+});
+
 module.exports = mongoose.model("Conversation", conversationSchema);

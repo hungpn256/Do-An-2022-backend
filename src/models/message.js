@@ -42,4 +42,8 @@ const messageSchema = new mongoose.Schema({
 messageSchema.set("toObject", { virtuals: true });
 messageSchema.set("toJSON", { virtuals: true });
 
+messageSchema.pre("find", function () {
+  this.populate("createdBy", "_id fullName avatar");
+});
+
 module.exports = mongoose.model("Message", messageSchema);
