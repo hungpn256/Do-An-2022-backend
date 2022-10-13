@@ -101,6 +101,38 @@ io.on("connection", async (socket) => {
     listSocketFriend.forEach((item) => {
       socket.to(item.socket).emit("friend-status-change", item.user);
     });
+
+    //handle callEnd
+  });
+
+  socket.on(
+    "call-conversation",
+    async ({ conversationId, signalData, from }) => {
+      const user = await User.findById(from);
+      const conversation = await Conversation.findById(conversationId);
+      if (!user || !conversation) return;
+      const usersToCall = conversation.participants
+        .map((i) => i.user)
+        .filter((user) => user.toString() !== user.from);
+      const listSocketFriend = await SocketModel.find({
+        user: {
+          $in: usersToCall,
+        },
+        socket: {
+          $ne: socket.id,
+        },
+      });
+
+      listSocketFriend.forEach((item) => {
+        socket
+          .to(item.socket)
+          .emit("call-conversation", { signal: signalData, from: user });
+      });
+    }
+  );
+
+  socket.on("answerCall", (data) => {
+    io.to(data.to).emit("callAccepted", data.signal);
   });
 });
 
