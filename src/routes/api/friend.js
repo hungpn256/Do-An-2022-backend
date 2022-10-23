@@ -155,7 +155,6 @@ router.get("/byStatus", requireSignin, async (req, res) => {
       error,
     });
   } catch (error) {
-    console.log("🚀 ~ file: friend.js ~ line 167 ~ router.get ~ error", error);
     return res.status(400).json({
       success: false,
       message: "Your request could not be processed. Please try again.",
@@ -168,18 +167,18 @@ router.get("/:_id", requireSignin, async (req, res) => {
   try {
     const _id = req.params._id;
     const q = req.query.q;
-    const allFriend = await User.findById(_id).distinct('friend');
+    const allFriend = await User.findById(_id).distinct("friend");
     const query = {
       _id: {
-        $in: allFriend
-      }
+        $in: allFriend,
+      },
     };
     if (q) {
-      query.fullName = new RegExp(q, "i")
+      query.fullName = new RegExp(q, "i");
     }
     const friendInSearch = await User.find(query).sort({
-      lastLogin: -1
-    })
+      lastLogin: -1,
+    });
     if (friendInSearch) {
       return res.status(200).json({
         success: true,

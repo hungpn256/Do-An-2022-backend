@@ -19,7 +19,6 @@ router.get("/birthday", async (req, res) => {
     },
   ]).exec(function (err, docs) {
     if (err) throw err;
-    console.log(docs);
   });
 });
 

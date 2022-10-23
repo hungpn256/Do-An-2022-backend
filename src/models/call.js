@@ -15,14 +15,13 @@ const callSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  conversation: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Comment",
-      required: true,
-    },
-  ],
-  paticipants: [
+  conversation: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Conversation",
+    required: true,
+  },
+
+  participants: [
     {
       user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -30,6 +29,10 @@ const callSchema = new mongoose.Schema({
         required: true,
       },
       signal: {
+        type: mongoose.Schema.Types.Mixed,
+        required: true,
+      },
+      socket: {
         type: String,
         required: true,
       },
@@ -48,7 +51,7 @@ callSchema.pre("find", function () {
   })
     .populate("conversation")
     .populate({
-      path: "paticipants.user",
+      path: "participants.user",
       select: {
         _id: 1,
         fullName: 1,

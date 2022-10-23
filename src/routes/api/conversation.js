@@ -100,10 +100,6 @@ router.post("/unseen", requireSignin, async (req, res) => {
           i.lastSeen = Date.now();
         }
       });
-      console.log(
-        "🚀 ~ file: conversation.js ~ line 196 ~ conversation.participants.forEach ~ conversation",
-        conversation
-      );
       await conversation.save();
       return res.status(200).json({
         success: true,
@@ -312,10 +308,6 @@ router.post("/cron", requireSignin, async (req, res) => {
     const message = req.body.message;
     const conversationId = req.body.conversationId;
 
-    console.log(
-      "🚀 ~ file: conversation.js ~ line 310 ~ router.post ~ time",
-      time
-    );
     const job = new CronJob(
       new Date(time),
       async () => {
@@ -343,7 +335,6 @@ router.post("/cron", requireSignin, async (req, res) => {
           },
         });
         conversationUpdated.messages = [messageResp];
-        console.log("oke");
         const io = res.app.get("socketio");
         const listSocketConversation = await SocketModel.find({
           user: {
@@ -409,7 +400,6 @@ router.post("/change-nickname", requireSignin, async (req, res) => {
       message: "Change nickname successfully",
     });
   } catch (e) {
-    console.log(e);
     return res.status(400).json({
       success: false,
       message: "Get conversation error",
@@ -514,7 +504,6 @@ router.post("/", requireSignin, async (req, res) => {
       });
     }
   } catch (e) {
-    console.log(e);
     return res.status(400).json({
       success: false,
       message: "Get conversation error",

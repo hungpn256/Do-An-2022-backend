@@ -202,7 +202,7 @@ router.post("/comment/:id", requireSignin, async (req, res) => {
       comment: commentResponse,
     });
   } catch (err) {
-    console.log("🚀 ~ file: post.js ~ line 148 ~ router.post ~ err", err);
+    "🚀 ~ file: post.js ~ line 148 ~ router.post ~ err", err;
     return res.status(400).json({
       error: "Your request could not be processed. Please try again.",
     });

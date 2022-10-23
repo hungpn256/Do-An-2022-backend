@@ -6,6 +6,7 @@ const postRoutes = require("./post.js");
 const friendRoutes = require("./friend");
 const conversationRoutes = require("./conversation");
 const notificationRoutes = require("./notification");
+const callRoutes = require("./call");
 const { queryVarUser, queryVarPost } = require("../../services/query.js");
 const User = require("../../models/user.js");
 const Post = require("../../models/post.js");
@@ -28,6 +29,9 @@ router.use("/conversation", conversationRoutes);
 
 //notifications routes
 router.use("/notification", notificationRoutes);
+
+//call routes
+router.use("/call", callRoutes);
 
 router.get("/search", async (req, res) => {
   let q = req.query.q;

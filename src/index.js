@@ -19,8 +19,9 @@ const User = require("./models/user");
 const Post = require("./models/post");
 const SocketModel = require("./models/socket");
 const Conversation = require("./models/conversation");
+const Call = require("./models/call");
 
-app.use(morgan("dev"));
+// app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
@@ -34,6 +35,7 @@ mongoose
   })
   .then(async () => {
     await SocketModel.deleteMany();
+    await Call.deleteMany();
     await User.updateMany({ status: "ONLINE" }, { status: "OFFLINE" });
     // await Post.updateMany(
     //   {},
@@ -103,36 +105,73 @@ io.on("connection", async (socket) => {
     });
 
     //handle callEnd
+    const call = await Call.findOne({
+      "participants.socket": socket.id,
+      endAt: null,
+    });
+    if (call) {
+      call.participants.splice(
+        call.participants.findIndex((i) => i.socket === socket.id),
+        1
+      );
+      if (call.participants.length < 2) {
+        call.endAt = Date.now();
+        socket.broadcast.to(call._id.toString()).emit("call-end");
+      }
+      await call.save();
+    }
   });
 
-  socket.on(
-    "call-conversation",
-    async ({ conversationId, signalData, from }) => {
-      const user = await User.findById(from);
-      const conversation = await Conversation.findById(conversationId);
-      if (!user || !conversation) return;
-      const usersToCall = conversation.participants
-        .map((i) => i.user)
-        .filter((user) => user.toString() !== user.from);
-      const listSocketFriend = await SocketModel.find({
-        user: {
-          $in: usersToCall,
-        },
-        socket: {
-          $ne: socket.id,
-        },
-      });
+  socket.on("join", async ({ signal, callId }) => {
+    try {
+      const userId = socket.user._id;
+      let callCurrent = await Call.findById(callId);
 
-      listSocketFriend.forEach((item) => {
-        socket
-          .to(item.socket)
-          .emit("call-conversation", { signal: signalData, from: user });
+      callCurrent.participants.push({
+        user: userId,
+        signal,
+        socket: socket.id,
       });
+      await callCurrent.save();
+
+      const newCall = await Call.findOne(callCurrent)
+        .populate({
+          path: "participants.user",
+          select: {
+            avatar: 1,
+            fullName: 1,
+            status: 1,
+          },
+        })
+        .populate("conversation")
+        .populate("createdBy");
+
+      socket.join(callId);
+      if (callCurrent.participants.length > 1) {
+        socket.broadcast.to(callId).emit("user-join-call", {
+          call: newCall,
+        });
+      } else {
+        const conversation = await Conversation.findById(
+          callCurrent.conversation
+        );
+
+        const usersToCall = conversation.participants
+          .map((i) => i.user)
+          .filter((user) => user.toString() !== userId);
+        const listSocketFriend = await SocketModel.find({
+          user: {
+            $in: usersToCall,
+          },
+        });
+
+        listSocketFriend.forEach((item) => {
+          socket.to(item.socket).emit("call-conversation", newCall);
+        });
+      }
+    } catch (e) {
+      console.log("eeeeeeeeeeeeeeeee", e.message);
     }
-  );
-
-  socket.on("answerCall", (data) => {
-    io.to(data.to).emit("callAccepted", data.signal);
   });
 });
 
