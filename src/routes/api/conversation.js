@@ -151,14 +151,19 @@ router.get("/", requireSignin, async (req, res) => {
         perDocumentLimit: 1,
         options: {
           sort: { createdAt: -1 },
-          populate: {
-            path: "createdBy",
-            select: {
-              _id: 1,
-              avatar: 1,
-              fullName: 1,
+          populate: [
+            {
+              path: "createdBy",
+              select: {
+                _id: 1,
+                avatar: 1,
+                fullName: 1,
+              },
             },
-          },
+            {
+              path: "reply",
+            },
+          ],
         },
       })
       .populate({
@@ -210,7 +215,8 @@ router.get("/:conversationId/message", requireSignin, async (req, res) => {
           fullName: 1,
           status: 1,
         },
-      });
+      })
+      .populate("reply");
 
     return res.status(200).json({
       success: true,
@@ -269,14 +275,7 @@ router.post("/message", requireSignin, async (req, res) => {
 
     const newMessages = new Message(message);
     const messageSave = await newMessages.save();
-    const messageResp = await Message.populate(messageSave, {
-      path: "createdBy",
-      select: {
-        avatar: 1,
-        fullName: 1,
-        status: 1,
-      },
-    });
+    const messageResp = await Message.findOne(messageSave);
     conversationUpdated.messages = [messageResp];
     const io = res.app.get("socketio");
     const listSocketConversation = await SocketModel.find({

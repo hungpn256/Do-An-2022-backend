@@ -24,6 +24,7 @@ const messageSchema = new mongoose.Schema({
   },
   reply: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Message",
   },
   updatedAt: {
     type: Date,
@@ -43,7 +44,7 @@ messageSchema.set("toObject", { virtuals: true });
 messageSchema.set("toJSON", { virtuals: true });
 
 messageSchema.pre("find", function () {
-  this.populate("createdBy", "_id fullName avatar");
+  this.populate("createdBy", "_id fullName avatar").populate("reply");
 });
 
 module.exports = mongoose.model("Message", messageSchema);
