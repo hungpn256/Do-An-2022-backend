@@ -20,6 +20,7 @@ const Post = require("./models/post");
 const SocketModel = require("./models/socket");
 const Conversation = require("./models/conversation");
 const Call = require("./models/call");
+const Message = require("./models/message");
 
 // app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
@@ -36,6 +37,14 @@ mongoose
   .then(async () => {
     await SocketModel.deleteMany();
     await Call.deleteMany();
+    // await Message.updateMany(
+    //   {},
+    //   {
+    //     $set: {
+    //       updatedAt: null,
+    //     },
+    //   }
+    // );
     await User.updateMany({ status: "ONLINE" }, { status: "OFFLINE" });
     // await Post.updateMany(
     //   {},

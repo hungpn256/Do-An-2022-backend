@@ -17,6 +17,10 @@ const messageSchema = new mongoose.Schema({
       },
     },
   ],
+  deletedAt: {
+    type: Date,
+    default: null,
+  },
   type: {
     type: String,
     enum: ["MESSAGE", "NOTIFICATION"],

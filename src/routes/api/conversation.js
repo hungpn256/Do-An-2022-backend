@@ -232,6 +232,45 @@ router.get("/:conversationId/message", requireSignin, async (req, res) => {
   }
 });
 
+router.delete("/message/:messageId", requireSignin, async (req, res) => {
+  try {
+    const messageId = req.params.messageId;
+    const message = await Message.findById(messageId);
+    message.deletedAt = Date.now();
+    await message.save();
+    const conversationId = message.conversation;
+    const conversation = await Conversation.findById(conversationId)
+      .populate({
+        path: "participants.user",
+        select: {
+          avatar: 1,
+          fullName: 1,
+          status: 1,
+        },
+      })
+      .populate("pinMessage");
+
+    const io = res.app.get("socketio");
+    const listSocketConversation = await SocketModel.find({
+      user: {
+        $in: conversation.participants.map((i) => i.user._id),
+      },
+    });
+    listSocketConversation.forEach((item) => {
+      io.to(item.socket).emit("delete-message", message);
+    });
+    return res.status(200).json({
+      success: true,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: "Some thing went wrong",
+      error: e,
+    });
+  }
+});
+
 router.put("/:conversationId", requireSignin, async (req, res) => {
   try {
     const conversationId = req.params.conversationId;
