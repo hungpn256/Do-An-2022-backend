@@ -51,4 +51,8 @@ messageSchema.pre("find", function () {
   this.populate("createdBy", "_id fullName avatar").populate("reply");
 });
 
+messageSchema.pre("findOne", function () {
+  this.populate("createdBy", "_id fullName avatar").populate("reply");
+});
+
 module.exports = mongoose.model("Message", messageSchema);
