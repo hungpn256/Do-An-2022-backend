@@ -139,7 +139,7 @@ router.get("/", requireSignin, async (req, res) => {
 
     if (lastConversationUpdatedAt) {
       query.updatedAt = {
-        $gt: lastConversationUpdatedAt,
+        $lt: lastConversationUpdatedAt,
       };
     }
 
