@@ -138,6 +138,46 @@ router.put("/:id/text", requireSignin, async (req, res) => {
   );
 });
 
+router.delete("/comment/:id", requireSignin, async (req, res) => {
+  const id = req.params.id;
+  try {
+    await Comment.findByIdAndDelete(id);
+    return res.status(200).json({
+      success: true,
+      message: "Delete comment successfully.",
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: `You can't delete this comment.`,
+      error: e.message,
+    });
+  }
+});
+
+router.put("/comment/:id", requireSignin, async (req, res) => {
+  const id = req.params.id;
+  const content = req.body.content;
+  try {
+    const commentUpdated = await Comment.findByIdAndUpdate(
+      id,
+      { content },
+      { new: true }
+    );
+    return res.status(200).json({
+      success: true,
+      message: "Update comment successfully.",
+      comment: commentUpdated,
+    });
+  } catch (e) {
+    return res.status(400).json({
+      success: false,
+      message: `You can't update this comment.`,
+      error: e.message,
+    });
+  }
+});
+
 router.delete("/:id", requireSignin, async (req, res) => {
   const user = req.user._id;
   const id = req.params.id;
