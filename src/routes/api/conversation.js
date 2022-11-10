@@ -352,19 +352,21 @@ router.post("/cron", requireSignin, async (req, res) => {
         const conversationUpdated = await Conversation.findByIdAndUpdate(
           conversationId,
           { updatedAt: Date.now() }
-        ).populate({
-          path: "participants.user",
-          select: {
-            avatar: 1,
-            fullName: 1,
-            status: 1,
-          },
-        });
+        )
+          .populate({
+            path: "participants.user",
+            select: {
+              avatar: 1,
+              fullName: 1,
+              status: 1,
+            },
+          })
+          .populate("pinMessage");
         message.createdBy = req.user._id;
 
         const newMessages = new Message(message);
         const messageSave = await newMessages.save();
-        const messageResp = await Message.populate(messageSave, {
+        const messageResp = await Message.findOne(messageSave).populate({
           path: "createdBy",
           select: {
             avatar: 1,
