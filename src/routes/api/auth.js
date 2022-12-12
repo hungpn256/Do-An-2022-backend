@@ -199,9 +199,11 @@ router.post("/confirm-password", async (req, res) => {
       success: true,
     });
   } catch (err) {
+    console.log(err);
     return res.status(400).json({
       success: false,
       message: "Your request could not be processed. Please try again.",
+      error: err?.message,
     });
   }
 });
