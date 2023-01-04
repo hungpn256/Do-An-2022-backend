@@ -2,6 +2,8 @@ const router = require("express").Router();
 const { requireSignin } = require("../../middleware/index.js");
 const User = require("../../models/user.js");
 const Friend = require("../../models/friend");
+const { createNotifications } = require("../../services/notification.js");
+const Notification = require("../../models/notification.js");
 
 router.post("/:idUser", requireSignin, async (req, res) => {
   try {
@@ -22,6 +24,17 @@ router.post("/:idUser", requireSignin, async (req, res) => {
     }
     const _newFriend = new Friend({ requester: _id, recipient: _idTarget });
     await _newFriend.save();
+    const _newFriendPopulated = await Friend.findOne(_newFriend).populate(
+      "recipient requester"
+    );
+    await createNotifications(
+      res,
+      {
+        type: "FRIEND",
+        friend: _newFriendPopulated,
+      },
+      _id
+    );
     return res.status(200).json({
       success: true,
     });
@@ -78,6 +91,17 @@ router.put("/:idUser", requireSignin, async (req, res) => {
         await user1.save();
         user2.friend.push(_id);
         await user2.save();
+        const _friendPopulated = await Friend.findOne(checkExist).populate(
+          "recipient requester"
+        );
+        await createNotifications(
+          res,
+          {
+            type: "FRIEND",
+            friend: _friendPopulated,
+          },
+          _id
+        );
       } else if (status === "REJECTED") {
         if (user1.friend.includes(user2._id)) {
           await User.updateOne(
@@ -99,7 +123,10 @@ router.put("/:idUser", requireSignin, async (req, res) => {
             }
           );
         }
-        checkExist.remove();
+        await Notification.deleteMany({
+          friend: checkExist._id.toString(),
+        });
+        await checkExist.remove();
       }
       return res.status(200).json({
         success: true,

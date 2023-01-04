@@ -16,7 +16,7 @@ const notificationSchema = new mongoose.Schema({
       "LIKE_COMMENT",
       "REPLY_COMMENT",
       "COMMENT_POST",
-      "ACCREP_FRIEND",
+      "FRIEND",
     ],
     default: "LIKE_POST",
   },

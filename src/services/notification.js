@@ -53,6 +53,13 @@ const createNotifications = async (res, notification, userId) => {
   } else if (_notification.type === "REPLY_COMMENT") {
     const commentReply = await Comment.findById(notification.comment.replyTo);
     usersNoti = [commentReply.createdBy._id.toString()];
+  } else if (_notification.type === "FRIEND") {
+    const friend = notification.friend;
+    if (friend.status === "PENDING") {
+      usersNoti = [friend.recipient._id.toString()];
+    } else {
+      usersNoti = [friend.requester._id.toString()];
+    }
   }
 
   _notification.userRelative = usersNoti;
@@ -68,6 +75,10 @@ const createNotifications = async (res, notification, userId) => {
         fullName: 1,
         avatar: 1,
       },
+    },
+    {
+      path: "friend",
+      populate: [{ path: "requester" }, { path: "recipient" }],
     },
   ]);
 

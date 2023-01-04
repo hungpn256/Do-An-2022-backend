@@ -94,7 +94,10 @@ router.get("/", requireSignin, async (req, res) => {
       .sort({ updatedAt: -1 })
       .populate("post")
       .populate("comment.replyTo comment.newComment")
-      .populate("friend")
+      .populate({
+        path: "friend",
+        populate: "requester recipient",
+      })
       .exec();
 
     const notiRes = notifications.map((notification) => {

@@ -55,6 +55,7 @@ userSchema.pre("save", function (next) {
       next();
     });
   });
+  this.fullName = this.firstName + " " + this.lastName;
 });
 
 module.exports = mongoose.model("User", userSchema);
