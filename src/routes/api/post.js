@@ -422,7 +422,7 @@ router.post("/like-comment/:id", requireSignin, async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Like post successfully.",
-      post: _commentResponse,
+      comment: _commentResponse,
     });
   } catch (error) {
     return res.status(400).json({
