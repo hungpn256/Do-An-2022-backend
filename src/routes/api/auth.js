@@ -157,7 +157,7 @@ router.post("/send-email-password", (req, res) => {
       jwt.sign(payload, secret, { expiresIn: "10m" }, async (err, token) => {
         await sendEmail({
           to: email,
-          html: `To retrieve password: <a href="http://localhost:3000/auth/confirm-password?token=${token}">click here</a>`,
+          html: `To retrieve password: <a href="https://www.hungpn.click/auth/confirm-password?token=${token}">click here</a>`,
           subject: "FORGOT PASSWORD",
           text: "Mạng xã hội",
           from: "Mạng xã hội",
