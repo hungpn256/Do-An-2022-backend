@@ -25,7 +25,14 @@ const Message = require("./models/message");
 // app.use(morgan("dev"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "https://www.hungpn.click",
+      "https://social-networking-oq5u.vercel.app",
+    ],
+  })
+);
 app.use(passport.initialize());
 app.use("/public", express.static(path.join(__dirname, "uploads")));
 // Connect to MongoDB
@@ -76,33 +83,17 @@ io.use((socket, next) => {
 
 app.set("socketio", io);
 io.on("connection", async (socket) => {
-  const { user } = socket;
-  const newSocket = {
-    socket: socket.id,
-    user: user._id,
-  };
-  await new SocketModel(newSocket).save();
-  await User.findOneAndUpdate(
-    { _id: user._id },
-    { status: "ONLINE", lastLogin: new Date() }
-  );
-  const userCurrent = await User.findOne({ _id: user._id });
-  const listSocketFriend = await SocketModel.find({
-    user: {
-      $in: userCurrent.friend,
-    },
-  });
-  listSocketFriend.forEach((item) => {
-    socket.to(item.socket).emit("friend-status-change", item.user);
-  });
-
-  socket.on("disconnect", async () => {
-    console.log("disconnect");
-    await SocketModel.findOneAndDelete({ socket: socket.id });
-    const checkSokerExist = await SocketModel.findOne({ user: user._id });
-    if (!checkSokerExist) {
-      await User.findOneAndUpdate({ _id: user._id }, { status: "OFFLINE" });
-    }
+  try {
+    const { user } = socket;
+    const newSocket = {
+      socket: socket.id,
+      user: user._id,
+    };
+    await new SocketModel(newSocket).save();
+    await User.findOneAndUpdate(
+      { _id: user._id },
+      { status: "ONLINE", lastLogin: new Date() }
+    );
     const userCurrent = await User.findOne({ _id: user._id });
     const listSocketFriend = await SocketModel.find({
       user: {
@@ -112,22 +103,45 @@ io.on("connection", async (socket) => {
     listSocketFriend.forEach((item) => {
       socket.to(item.socket).emit("friend-status-change", item.user);
     });
+  } catch (err) {
+    console.log(err);
+  }
 
-    //handle callEnd
-    const call = await Call.findOne({
-      "participants.socket": socket.id,
-      endAt: null,
-    });
-    if (call) {
-      call.participants.splice(
-        call.participants.findIndex((i) => i.socket === socket.id),
-        1
-      );
-      if (call.participants.length < 2) {
-        call.endAt = Date.now();
-        socket.broadcast.to(call._id.toString()).emit("call-end");
+  socket.on("disconnect", async () => {
+    try {
+      await SocketModel.findOneAndDelete({ socket: socket.id });
+      const checkSokerExist = await SocketModel.findOne({ user: user._id });
+      if (!checkSokerExist) {
+        await User.findOneAndUpdate({ _id: user._id }, { status: "OFFLINE" });
       }
-      await call.save();
+      const userCurrent = await User.findOne({ _id: user._id });
+      const listSocketFriend = await SocketModel.find({
+        user: {
+          $in: userCurrent.friend,
+        },
+      });
+      listSocketFriend.forEach((item) => {
+        socket.to(item.socket).emit("friend-status-change", item.user);
+      });
+
+      //handle callEnd
+      const call = await Call.findOne({
+        "participants.socket": socket.id,
+        endAt: null,
+      });
+      if (call) {
+        call.participants.splice(
+          call.participants.findIndex((i) => i.socket === socket.id),
+          1
+        );
+        if (call.participants.length < 2) {
+          call.endAt = Date.now();
+          socket.broadcast.to(call._id.toString()).emit("call-end");
+        }
+        await call.save();
+      }
+    } catch (err) {
+      console.log(err);
     }
   });
 
